@@ -33,13 +33,23 @@ const Home = () => {
   const [fileColumns, setFileColumns] = useState([]);
   const [selectedColumn] = useState('');
   const [showSelectColumn, setShowSelectColumn] = useState(false);
+  const [username, setUsername] = useState('');
 
-  
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token'); // Asegúrate de guardar el token al iniciar sesión
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+        setUsername(storedUsername);
+    }
+}, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    console.log('Token actual:', token); // Registrar el token en la consola
-
+    
     if (!token) {
       navigate('/login'); 
     }
@@ -47,23 +57,35 @@ const Home = () => {
 
   useEffect(() => {
     const fetchPrompts = async () => {
+        const token = localStorage.getItem('token'); // Obtén el token
+        if (!token) {
+            alert('No está autenticado. Inicie sesión para cargar sus prompts.');
+            return;
+        }
+
         try {
-            const response = await axios.get('http://localhost:5000/api/prompts');
-            setSavedPrompts(response.data);
+            const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setSavedPrompts(response.data); 
         } catch (error) {
-            console.error('Error al obtener los prompts guardados:', error);
+            console.error('Error al cargar los prompts:', error);
         }
     };
+
     fetchPrompts();
 }, []);
 
+
 const handleLogout = () => {
-  localStorage.removeItem('token'); // Eliminar el token
-  navigate('/login'); // Redirigir al login
+  localStorage.removeItem('token'); 
+  localStorage.removeItem('username');
+  navigate('/login'); 
 };
 
 const handleProfile = () => {
-  navigate('/perfil'); // Redirigir al login
+  navigate('/perfil');
 };
 
     const handlePromptChange = (event) => {
@@ -202,46 +224,44 @@ const handleProfile = () => {
       };
 
       const handleSavePrompt = async () => {
-        // Convertir queryBatchLength a un número
+        // Validaciones
         const batchLength = parseInt(queryBatchLength, 10);
-    
-        // Validar que los valores estén definidos y que queryBatchLength sea un número
         if (!prompt || !evaluatorId || !gptManager || isNaN(batchLength)) {
-            setErrorMessage('Por favor, complete todos los campos requeridos: prompt, ID del evaluador, GPT Manager y Batch Length.');
+            setErrorMessage('Por favor, complete todos los campos requeridos.');
             return;
         }
-    
         setErrorMessage('');
     
         try {
-            // Guardar el prompt en la base de datos con todos los valores necesarios
-            await axios.post('http://localhost:5000/api/prompts', {
-                prompt,
-                evaluator_id: evaluatorId,
-                gpt_manager: gptManager,
-                query_batch_length: batchLength,
-                temperature
-            });
-    
+            await axios.post(
+                'http://localhost:5000/api/prompts',
+                {
+                    prompt,
+                    evaluator_id: evaluatorId,
+                    gpt_manager: gptManager,
+                    query_batch_length: batchLength,
+                    temperature,
+                },
+                { headers: getAuthHeaders() } // Añadir el token aquí
+            );
             alert('Prompt guardado correctamente.');
         } catch (error) {
             console.error('Error al guardar el prompt:', error);
         }
-      };
+    };
+    
 
-      const handleLoadSavedPrompt = (event) => {
-        const selectedEvaluatorId = event.target.value;
-      
-        const selectedPromptData = savedPrompts.find(prompt => prompt.evaluator_id === selectedEvaluatorId);
-      
-        if (selectedPromptData) {
-            setPrompt(selectedPromptData.prompt);
-            setEvaluatorId(selectedPromptData.evaluator_id);
-            setGptManager(selectedPromptData.gpt_manager);
-            setQueryBatchLength(selectedPromptData.query_batch_length);
-            setTemperature(selectedPromptData.temperature); // Cargar la temperatura
-        }
-        };
+    const handleLoadSavedPrompt = async () => {
+      try {
+          const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
+              headers: getAuthHeaders(),
+          });
+          setSavedPrompts(response.data); // Asignar los prompts al estado
+      } catch (error) {
+          console.error('Error al cargar los prompts:', error);
+      }
+  };
+  
       
         const handleAddResponseClick = () => {
           setIsAddingResponse(true);
@@ -290,6 +310,7 @@ const handleProfile = () => {
                 <div className='flex flex-row justify-between border-b border-b-gray-500 mb-5'>
                   <h1 className="text-2xl font-bold m-2 pt-3 ">Evaluador Automático</h1>
                   <div className='flex flex-row'>
+                    <p className='text-2xl font-bold m-2 mr-5'>{username}</p>
                     <button
                     onClick={handleProfile}
                     className="bg-gray-300 hover:bg-gray-400 text-white font-bold mr-10 mb-2 py-2 px-4 rounded-xl "

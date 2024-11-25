@@ -26,9 +26,11 @@ const Login = () => {
 
       if (response.status === 200) {
         const token = response.data.token;
-        localStorage.setItem('token', token); // Almacenar el token
+        localStorage.setItem('token', token);
+        localStorage.setItem('username', username);
         console.log('Token almacenado:', token);
-        navigate('/home'); // Redirigir al usuario
+        console.log('Usuario: ', username)
+        navigate('/home');
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');

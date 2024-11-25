@@ -28,12 +28,10 @@ const Register = () => {
       });
 
       alert('Usuario registrado correctamente.');
-      // Si la solicitud es exitosa, redirigir al login
       if (response.status === 201) {
         navigate('/login');
       }
     } catch (err) {
-      // Si hay algún error, mostrar el mensaje
       setError(err.response?.data?.error || 'Error al registrar el usuario');
     }
   };
