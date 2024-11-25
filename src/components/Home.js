@@ -45,7 +45,7 @@ const Home = () => {
     if (storedUsername) {
         setUsername(storedUsername);
     }
-}, []);
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -75,25 +75,25 @@ const Home = () => {
     };
 
     fetchPrompts();
-}, []);
+  }, []);
 
 
-const handleLogout = () => {
-  localStorage.removeItem('token'); 
-  localStorage.removeItem('username');
-  navigate('/login'); 
-};
+  const handleLogout = () => {
+    localStorage.removeItem('token'); 
+    localStorage.removeItem('username');
+    navigate('/login'); 
+  };
 
-const handleProfile = () => {
-  navigate('/perfil');
-};
+  const handleProfile = () => {
+    navigate('/perfil');
+  };
 
-    const handlePromptChange = (event) => {
+  const handlePromptChange = (event) => {
         setPrompt(event.target.value);
         setSelectedPrompt('');
-    };
+  };
 
-    const handleSubmit = async () => {
+  const handleSubmit = async () => {
         // Validación: Si alguno de los campos está vacío, mostramos un mensaje de error
         if (!prompt || selectedResponses.length === 0 || !evaluatorId) {
           setErrorMessage('Por favor, complete todos los campos: el prompt, las respuestas de los estudiantes y el ID del evaluador.');
@@ -119,25 +119,25 @@ const handleProfile = () => {
         } finally {
           setIsLoading(false);
         }
-    };
+  };
 
-    const handleCheckboxChange = (response) => {
+  const handleCheckboxChange = (response) => {
         if (selectedResponses.includes(response)) {
           setSelectedResponses(selectedResponses.filter(item => item !== response)); 
         } else {
           setSelectedResponses([...selectedResponses, response]); 
         }
-    };
+  };
     
-      const handleSelectAll = (event) => {
+  const handleSelectAll = (event) => {
         if (event.target.checked) {
           setSelectedResponses(studentResponses);
         } else {
           setSelectedResponses([]);
         }
-      };
+  };
     
-      const handleRandomSelect = () => {
+  const handleRandomSelect = () => {
         const count = parseInt(randomSelectCount, 10);
         
         if (count > studentResponses.length) {
@@ -151,9 +151,9 @@ const handleProfile = () => {
       
         // Actualiza las respuestas seleccionadas con las seleccionadas aleatoriamente
         setSelectedResponses(selectedRandomResponses);
-      };
+  };
     
-      const handleDownload = () => {
+  const handleDownload = () => {
         const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -161,17 +161,17 @@ const handleProfile = () => {
         a.download = 'resultado.txt';
         a.click();
         URL.revokeObjectURL(url);
-      };
+  };
     
-      const handleClear = () => {
-        setPrompt(''); 
-        setEvaluatorId('');
-        setStudentResponses('');
-        setResult('');
-        setShowSelectColumn(false);
-      };
+  const handleClear = () => {
+    setPrompt(''); 
+    setEvaluatorId('');
+    setStudentResponses('');
+    setResult('');
+    setShowSelectColumn(false);
+  };
 
-      const handleFileUpload = (event) => {
+  const handleFileUpload = (event) => {
         const file = event.target.files[0];
         if (file) {
           const fileType = file.name.split('.').pop().toLowerCase();
@@ -221,9 +221,9 @@ const handleProfile = () => {
             setErrorMessage('Tipo de archivo no soportado. Por favor, cargue un archivo .txt, .csv o .xlsx');
           }
         }
-      };
+  };
 
-      const handleSavePrompt = async () => {
+  const handleSavePrompt = async () => {
         // Validaciones
         const batchLength = parseInt(queryBatchLength, 10);
         if (!prompt || !evaluatorId || !gptManager || isNaN(batchLength)) {
@@ -248,31 +248,29 @@ const handleProfile = () => {
         } catch (error) {
             console.error('Error al guardar el prompt:', error);
         }
-    };
+  };
     
-
-    const handleLoadSavedPrompt = async () => {
-      try {
-          const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
-              headers: getAuthHeaders(),
-          });
-          setSavedPrompts(response.data); // Asignar los prompts al estado
-      } catch (error) {
-          console.error('Error al cargar los prompts:', error);
-      }
+  const handleLoadSavedPrompt = async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
+                headers: getAuthHeaders(),
+            });
+            setSavedPrompts(response.data); // Asignar los prompts al estado
+        } catch (error) {
+            console.error('Error al cargar los prompts:', error);
+        }
   };
   
-      
-        const handleAddResponseClick = () => {
+  const handleAddResponseClick = () => {
           setIsAddingResponse(true);
-        };
+  };
         
-        const handleCancelAddResponse = () => {
+  const handleCancelAddResponse = () => {
           setIsAddingResponse(false);
           setNewResponse('');
-        };
+  };
         
-        const handleSaveNewResponse = () => {
+  const handleSaveNewResponse = () => {
           const trimmedResponse = newResponse.trim();
           if (trimmedResponse === '') {
             alert('La respuesta no puede estar vacía.');
@@ -289,9 +287,9 @@ const handleProfile = () => {
           setSelectedResponses([...selectedResponses, trimmedResponse]);
           setNewResponse('');
           setIsAddingResponse(false);
-        };
+  };
 
-        const handleColumnSelection = (e) => {
+  const handleColumnSelection = (e) => {
             const selectedColumn = e.target.value;
             const columnIndex = fileColumns.indexOf(selectedColumn);  // Buscar el índice de la columna seleccionada
             
@@ -299,7 +297,7 @@ const handleProfile = () => {
             const columnData = studentResponses.map(row => row[columnIndex]).filter(value => value);
             
             setStudentResponses(columnData);  // Actualizamos las respuestas con la columna seleccionada
-          };
+  };
 
 
           return (
