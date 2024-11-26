@@ -34,11 +34,16 @@ const Home = () => {
   const [selectedColumn] = useState('');
   const [showSelectColumn, setShowSelectColumn] = useState(false);
   const [username, setUsername] = useState('');
+  const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token'); // Asegúrate de guardar el token al iniciar sesión
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
+
+  useEffect(() => {
+    handleLoadSavedPrompt();
+  }, []);
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
@@ -104,7 +109,7 @@ const Home = () => {
         setIsLoading(true);
     
         try {
-          const response = await axios.post('http://localhost:5000/evaluate', {
+          const response = await axios.post('http://localhost:4000/evaluate', {
             prompt,
             studentResponses: selectedResponses,
             evaluator_id: evaluatorId,
@@ -169,6 +174,7 @@ const Home = () => {
     setStudentResponses('');
     setResult('');
     setShowSelectColumn(false);
+    setSelectedEvaluatorId('')
   };
 
   const handleFileUpload = (event) => {
@@ -251,15 +257,30 @@ const Home = () => {
   };
     
   const handleLoadSavedPrompt = async () => {
-        try {
-            const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
-                headers: getAuthHeaders(),
-            });
-            setSavedPrompts(response.data); // Asignar los prompts al estado
-        } catch (error) {
-            console.error('Error al cargar los prompts:', error);
-        }
+    try {
+        const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
+            headers: getAuthHeaders(),
+        });
+        setSavedPrompts(response.data); // Guarda los prompts en el estado
+    } catch (error) {
+        console.error('Error al cargar los prompts:', error);
+    }
   };
+
+const handleSelectPrompt = (event) => {
+  const evaluatorId = event.target.value; // Obtener el ID seleccionado
+  setSelectedEvaluatorId(evaluatorId);
+
+  const selectedPromptData = savedPrompts.find((prompt) => prompt.evaluator_id === evaluatorId);
+
+  if (selectedPromptData) {
+      setPrompt(selectedPromptData.prompt);
+      setEvaluatorId(selectedPromptData.evaluator_id);
+      setGptManager(selectedPromptData.gpt_manager);
+      setQueryBatchLength(selectedPromptData.query_batch_length);
+      setTemperature(selectedPromptData.temperature || 0.5);
+  }
+};
   
   const handleAddResponseClick = () => {
           setIsAddingResponse(true);
@@ -332,8 +353,8 @@ const Home = () => {
                   <label htmlFor="savedPrompts" className="block ml-1 mb-2 border-b border-b-gray-500">Seleccione un prompt guardado</label>
                   <select
                       id="savedPrompts"
-                      value={selectedPrompt}
-                      onChange={handleLoadSavedPrompt}
+                      value={selectedEvaluatorId}
+                      onChange={handleSelectPrompt}
                       className="border border-gray-300 rounded-lg px-4 py-2 mb-4 w-full"
                   >
                       <option value="">Seleccione un prompt</option>
