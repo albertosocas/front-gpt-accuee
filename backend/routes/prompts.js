@@ -4,11 +4,11 @@ const Prompt = require('../models/Prompt');
 const protect = require('./authMiddleware'); // Importar el middleware de autenticación
 const router = express.Router();
 
-// Guardar un nuevo prompt
-router.post('/', protect, async (req, res) => {
-    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature, inputTokens, outputTokens, responsesCount } = req.body;
 
-    const userId = req.user; // `protect` añade `req.user` basado en el token JWT
+router.post('/', protect, async (req, res) => {
+    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature } = req.body;
+
+    const userId = req.user; 
     if (!userId) {
         return res.status(401).json({ message: 'Usuario no autenticado.' });
     }
@@ -24,24 +24,8 @@ router.post('/', protect, async (req, res) => {
 
     try {
         const savedPrompt = await newPrompt.save();
-
-        // Actualizar estadísticas del usuario
-        const user = await User.findById(userId);
-        if (user) {
-            user.inputTokens += inputTokens || 0;
-            user.outputTokens += outputTokens || 0;
-            user.responsesProcessed += responsesCount || 0;
-
-            await user.save(); // Guarda los cambios
-        }
-
         res.status(201).json({
             savedPrompt,
-            stats: {
-                inputTokens: user ? user.inputTokens : 0,
-                outputTokens: user ? user.outputTokens : 0,
-                responsesProcessed: user ? user.responsesProcessed : 0
-            }
         });
     } catch (err) {
         if (err.code === 11000) {
@@ -51,7 +35,7 @@ router.post('/', protect, async (req, res) => {
     }
 });
 
-// Obtener prompts del usuario autenticado
+
 router.get('/user-prompts', protect, async (req, res) => {
     const userId = req.user;
     try {
@@ -62,7 +46,6 @@ router.get('/user-prompts', protect, async (req, res) => {
     }
 });
 
-// Obtener todos los prompts (sin autenticación, para pruebas o administradores)
 router.get('/', async (req, res) => {
     try {
         const prompts = await Prompt.find();
@@ -71,5 +54,64 @@ router.get('/', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+router.delete('/delete/:id', protect, async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user; 
+
+    try {
+        
+        const prompt = await Prompt.findById(id);
+
+        if (!prompt) {
+            return res.status(404).json({ message: 'Prompt no encontrado.' });
+        }
+
+        
+        if (prompt.user_id.toString() !== userId) {
+            return res.status(403).json({ message: 'No tienes permiso para eliminar este prompt.' });
+        }
+
+        await prompt.deleteOne();
+
+        res.status(200).json({ message: 'Prompt eliminado correctamente.' });
+    } catch (error) {
+        console.error('Error al eliminar el prompt:', error);
+        res.status(500).json({ message: 'Error al eliminar el prompt.' });
+    }
+});
+
+router.put('/edit/:id', protect, async (req, res) => {
+    const { id } = req.params;
+    const userId = req.user;
+    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature } = req.body;
+
+    try {
+        const existingPrompt = await Prompt.findById(id);
+
+        if (!existingPrompt) {
+            return res.status(404).json({ message: 'Prompt no encontrado.' });
+        }
+
+        if (existingPrompt.user_id.toString() !== userId) {
+            return res.status(403).json({ message: 'No tienes permiso para editar este prompt.' });
+        }
+
+        existingPrompt.prompt = prompt || existingPrompt.prompt;
+        existingPrompt.evaluator_id = evaluator_id || existingPrompt.evaluator_id;
+        existingPrompt.gpt_manager = gpt_manager || existingPrompt.gpt_manager;
+        existingPrompt.query_batch_length = query_batch_length || existingPrompt.query_batch_length;
+        existingPrompt.temperature = temperature || existingPrompt.temperature;
+
+        const updatedPrompt = await existingPrompt.save();
+
+        res.status(200).json({ message: 'Prompt actualizado correctamente.', updatedPrompt });
+    } catch (error) {
+        console.error('Error al editar el prompt:', error);
+        res.status(500).json({ message: 'Error al editar el prompt.' });
+    }
+});
+
+
 
 module.exports = router;

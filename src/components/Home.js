@@ -20,7 +20,7 @@ const Home = () => {
   const [stats, setStats] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [savedPrompts, setSavedPrompts] = useState([]);
-  const [selectedPrompt, setSelectedPrompt] = useState('');
+  const [setSelectedPrompt] = useState('');
   const [queryBatchLength, setQueryBatchLength] = useState(20);
   const [evaluatorId, setEvaluatorId] = useState('');
   const [gptManager, setGptManager] = useState('gpt-4');
@@ -37,7 +37,7 @@ const Home = () => {
   const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
 
   const getAuthHeaders = () => {
-    const token = localStorage.getItem('token'); // Asegúrate de guardar el token al iniciar sesión
+    const token = localStorage.getItem('token');
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
@@ -95,11 +95,33 @@ const Home = () => {
 
   const handlePromptChange = (event) => {
         setPrompt(event.target.value);
-        setSelectedPrompt('');
   };
 
+  const updateStats = async (stats, responsesProcessed) => {
+    try {
+        console.log('Valores para actualizar estadísticas:', {
+            inputTokens: stats.input_tokens,
+            outputTokens: stats.output_tokens,
+            responsesProcessed: responsesProcessed
+        });
+
+        await axios.post('http://localhost:5000/api/auth/actualizar', {
+            inputTokens: stats.input_tokens,
+            outputTokens: stats.output_tokens,
+            responsesProcessed: responsesProcessed
+        }, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+        console.log('Estadísticas actualizadas correctamente');
+    } catch (error) {
+        console.error('Error al actualizar las estadísticas:', error);
+    }
+};
+
   const handleSubmit = async () => {
-        // Validación: Si alguno de los campos está vacío, mostramos un mensaje de error
         if (!prompt || selectedResponses.length === 0 || !evaluatorId) {
           setErrorMessage('Por favor, complete todos los campos: el prompt, las respuestas de los estudiantes y el ID del evaluador.');
           return;
@@ -117,8 +139,14 @@ const Home = () => {
             query_batch_length: queryBatchLength,
             temperature
           });
+          
+          const stats = response.data.stats;
+          const responsesProcessed = selectedResponses.length; // Número de respuestas evaluadas en esta ejecución
+
           setResult(response.data.result);
-          setStats(response.data.stats);
+          setStats(stats);
+          await updateStats(stats, responsesProcessed);
+
         } catch (error) {
           console.error('Error al obtener los resultados:', error);
         } finally {
@@ -320,7 +348,6 @@ const handleSelectPrompt = (event) => {
             setStudentResponses(columnData);  // Actualizamos las respuestas con la columna seleccionada
   };
 
-
           return (
             <div className=" flex items-center justify-center bg-gray-100">
               <div className="w-full p-6 bg-white rounded-lg shadow-md">
@@ -328,11 +355,11 @@ const handleSelectPrompt = (event) => {
               { /* SECCION INICIAL */ }
                 <div className='flex flex-row justify-between border-b border-b-gray-500 mb-5'>
                   <h1 className="text-2xl font-bold m-2 pt-3 ">Evaluador Automático</h1>
-                  <div className='flex flex-row'>
-                    <p className='text-2xl font-bold m-2 mr-5'>{username}</p>
+                  <div className='flex flex-row w-[30%] justify-between'>
+                    <p className='text-2xl font-bold m-2 '>{username}</p>
                     <button
                     onClick={handleProfile}
-                    className="bg-gray-300 hover:bg-gray-400 text-white font-bold mr-10 mb-2 py-2 px-4 rounded-xl "
+                    className="bg-gray-300 hover:bg-gray-400 text-white font-bold  mb-2 py-2 px-4 rounded-xl "
                     title="perfil"
                   >
                     <img src={avatarIcon} alt="perfil" className="h-8 w-8" />
@@ -383,14 +410,14 @@ const handleSelectPrompt = (event) => {
                         id="evaluatorId"
                         value={evaluatorId}
                         onChange={(e) => setEvaluatorId(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-4 py-2 mx-5 mb-2"
+                        className="border border-gray-300 rounded-xl px-4 py-2 mx-5 mb-2"
                       />
                       <label htmlFor="gptManager" className="block px-5">Selecciona el GPT Manager:</label>
                       <select
                         id="gptManager"
                         value={gptManager}
                         onChange={(e) => setGptManager(e.target.value)}
-                        className="border border-gray-300 rounded-lg px-4 py-2 mx-5 mb-3"
+                        className="border border-gray-300 rounded-xl px-4 py-2 mx-5 mb-3"
                       >
                       <option value="gpt-4">GPT-4</option>
                       <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
@@ -402,7 +429,7 @@ const handleSelectPrompt = (event) => {
                           id="queryBatchLength"
                           value={queryBatchLength}
                           onChange={(e) => setQueryBatchLength(e.target.value)}
-                          className="border border-gray-300 rounded-lg h-10 w-20 ml-3 p-1"
+                          className="border border-gray-300 rounded-xl h-10 w-20 ml-3 p-1"
                         />
                       </div>
                       <label htmlFor="temperature" className="block px-5">Temperatura: {temperature} </label>
@@ -463,7 +490,7 @@ const handleSelectPrompt = (event) => {
                       <div className="mb-4 mt-2">
                         <button
                           onClick={handleAddResponseClick}
-                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-2 rounded"
+                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-2 rounded-xl"
                         >
                           <img src={anadirRespuesta} alt="anadir" className="h-7 w-7" />
                         </button>
@@ -481,13 +508,13 @@ const handleSelectPrompt = (event) => {
                         <div className="flex space-x-2">
                           <button
                             onClick={handleSaveNewResponse}
-                            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded"
+                            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1 px-3 rounded-xl"
                           >
                             Guardar
                           </button>
                           <button
                             onClick={handleCancelAddResponse}
-                            className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-1 px-3 rounded"
+                            className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-1 px-3 rounded-xl"
                           >
                             Cancelar
                           </button>
@@ -512,7 +539,7 @@ const handleSelectPrompt = (event) => {
                           value={separator}
                           onChange={(e) => setSeparator(e.target.value)}
                           placeholder=","
-                          className="border border-gray-300 rounded-lg px-4 py-2 w-20"
+                          className="border border-gray-300 rounded-xl px-4 py-2 w-20"
                         />
                       </div>
         
@@ -548,18 +575,18 @@ const handleSelectPrompt = (event) => {
                           value={randomSelectCount}
                           onChange={(e) => setRandomSelectCount(e.target.value)}
                           placeholder="Cantidad de respuestas a seleccionar"
-                          className="border border-gray-300 rounded-lg p-2 mr-5 w-20"
+                          className="border border-gray-300 rounded-xl p-2 mr-5 w-20"
                         />
                         <button
                           onClick={handleRandomSelect}
-                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded"
+                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl"
                         >
                           Seleccionar al azar
                         </button>
                       </div>
                       <button
                           onClick={handleSubmit}
-                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 mt-2 rounded-lg"
+                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 mt-2 rounded-xl"
                           disabled={isLoading}
                         >
                           {isLoading ? (

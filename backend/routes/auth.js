@@ -57,7 +57,14 @@ router.get('/profile', protect, async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        res.json({ username: user.username, email: user.email });
+        console.log("User profile data:", user); // Log para verificar los datos
+        res.json({ 
+            username: user.username, 
+            email: user.email,
+            inputTokens: user.inputTokens,
+            outputTokens: user.outputTokens,
+            responsesProcessed: user.responsesProcessed 
+        });
     } catch (err) {
         console.error('Error al obtener el perfil:', err);
         return res.status(500).json({ error: 'Error al obtener el perfil del usuario' });
@@ -85,5 +92,34 @@ router.post('/register', async (req, res) => {
         return res.status(500).json({ error: 'Error al registrar el usuario' });
     }
 });
+
+router.post('/actualizar', protect, async (req, res) => {
+    try {
+        const { inputTokens, outputTokens, responsesProcessed } = req.body;
+        const userId = req.user; 
+        
+
+        const user = await User.findById(userId);
+        if (user) {
+            user.inputTokens += inputTokens || 0;
+            user.outputTokens += outputTokens || 0;
+            user.responsesProcessed += responsesProcessed || 0;
+            await user.save();
+        }
+
+        res.status(201).json({
+            stats: {
+                inputTokens: user ? user.inputTokens : 0,
+                outputTokens: user ? user.outputTokens : 0,
+                responsesProcessed: user ? user.responsesProcessed : 0,
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Error al actualizar las estadísticas" });
+    }
+});
+
+
 
 module.exports = router;

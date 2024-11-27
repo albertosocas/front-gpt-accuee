@@ -8,10 +8,7 @@ const promptsRoutes = require('./routes/prompts');
 dotenv.config();
 
 const app = express();
-
-// Middleware
 app.use(express.json());
-
 
 const cors = require('cors');
 app.use(cors({
