@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const Login = () => {
+const Login = ({ setIsAuthenticated }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Manejar el envío del formulario
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Verificar que todos los campos estén completos
     if (!username || !password) {
       setError('Por favor, ingrese usuario y contraseña');
       return;
@@ -28,9 +26,11 @@ const Login = () => {
         const token = response.data.token;
         localStorage.setItem('token', token);
         localStorage.setItem('username', username);
-        console.log('Token almacenado:', token);
-        console.log('Usuario: ', username)
+      
+        console.log("Token almacenado:", token);
+        setIsAuthenticated(true);
         navigate('/home');
+
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');

@@ -7,34 +7,36 @@ import Perfil from './components/Perfil';
 import axios from 'axios';
 
 const App = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(null); // Cambiar a null para manejar el estado de carga
-  const [loading, setLoading] = useState(true); // Estado para manejar la carga de la autenticación
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token'); // Obtener el token del almacenamiento local
+      const token = localStorage.getItem('token');
+      
       if (!token) {
-        setIsAuthenticated(false); // No hay token, no está autenticado
+        setIsAuthenticated(false); 
         setLoading(false);
+        console.log("No hay token. Usuario no autenticado.");
         return;
       }
-
+  
       try {
-        // Solicitud al backend para verificar el perfil
         const response = await axios.get('http://localhost:5000/api/auth/profile', {
           headers: { Authorization: `Bearer ${token}` },
         });
-
+  
+        
         if (response.status === 200) {
-          setIsAuthenticated(true); // Autenticado correctamente
+          setIsAuthenticated(true);
         } else {
-          setIsAuthenticated(false); // Estado no autenticado por cualquier otra razón
+          setIsAuthenticated(false);
         }
       } catch (err) {
-        console.error('Error al verificar la autenticación:', err.message);
-        setIsAuthenticated(false); // Manejar errores como no autenticado
+        console.error("Error al verificar la autenticación:", err.message);
+        setIsAuthenticated(false);
       } finally {
-        setLoading(false); // Cuando se complete la verificación
+        setLoading(false);
       }
     };
 
@@ -42,13 +44,16 @@ const App = () => {
   }, []);
 
   if (loading) {
-    return <div>Cargando...</div>; // Puedes poner un indicador de carga mientras se verifica la autenticación
+    return <div>Cargando...</div>; 
   }
 
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={<Login setIsAuthenticated={setIsAuthenticated} />}
+        />
         <Route path="/register" element={<Register />} />
         <Route path="/home" element={isAuthenticated ? <Home /> : <Navigate to="/login" />} />
         <Route path="/perfil" element={isAuthenticated ? <Perfil /> : <Navigate to="/login" />} />

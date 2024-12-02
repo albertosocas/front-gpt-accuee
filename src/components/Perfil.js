@@ -74,7 +74,7 @@ const Perfil = () => {
     };
 
     const handleEditPrompt = (prompt) => {
-        setEditingPrompt(prompt._id); // Guardar el ID del prompt en edición
+        setEditingPrompt(prompt._id);
         setUpdatedPrompt(prompt);
     };
 

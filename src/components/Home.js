@@ -7,6 +7,7 @@ import anadirRespuesta from '../assets/anadir.png';
 import loadingIcon from '../assets/loading.gif';
 import cerrarIcon from '../assets/cerrar.png';
 import avatarIcon from '../assets/avatar.png';
+import checkIcon from '../assets/check.png';
 
 
 
@@ -35,6 +36,8 @@ const Home = () => {
   const [showSelectColumn, setShowSelectColumn] = useState(false);
   const [username, setUsername] = useState('');
   const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -141,7 +144,7 @@ const Home = () => {
           });
           
           const stats = response.data.stats;
-          const responsesProcessed = selectedResponses.length; // Número de respuestas evaluadas en esta ejecución
+          const responsesProcessed = selectedResponses.length;
 
           setResult(response.data.result);
           setStats(stats);
@@ -258,13 +261,13 @@ const Home = () => {
   };
 
   const handleSavePrompt = async () => {
-        // Validaciones
         const batchLength = parseInt(queryBatchLength, 10);
         if (!prompt || !evaluatorId || !gptManager || isNaN(batchLength)) {
             setErrorMessage('Por favor, complete todos los campos requeridos.');
             return;
         }
         setErrorMessage('');
+        setIsSaving(true);
     
         try {
             await axios.post(
@@ -276,11 +279,16 @@ const Home = () => {
                     query_batch_length: batchLength,
                     temperature,
                 },
-                { headers: getAuthHeaders() } // Añadir el token aquí
+                { headers: getAuthHeaders() }
             );
-            alert('Prompt guardado correctamente.');
+            setIsSaving(false); 
+            setIsSaved(true); 
+            setTimeout(() => {
+              setIsSaved(false);
+            }, 3000);
         } catch (error) {
             console.error('Error al guardar el prompt:', error);
+            setIsSaving(false);
         }
   };
     
@@ -452,10 +460,14 @@ const handleSelectPrompt = (event) => {
                         <img src={clearIcon} alt="Limpiar" className="h-10 w-10" />
                       </button>
                       <button
-                      onClick={handleSavePrompt}
-                      className="bg-gray-400 hover:bg-gray-500  text-white font-bold w-[70%] py-2 px-2 rounded-xl "
+                        onClick={handleSavePrompt}
+                        className={`flex items-center justify-center bg-gray-400 hover:bg-gray-500 text-white font-bold w-[70%] py-2 px-2 rounded-xl ${isSaving || isSaved ? 'cursor-not-allowed' : ''}`} disabled={isSaving || isSaved}
                       >
-                        Guardar Prompt
+                        {isSaved ? (
+                          <img src={checkIcon} alt="Guardado" className="h-10 w-10" />
+                        ) : (
+                          'Guardar Prompt'
+                        )}
                       </button>
                       </div>
                     </div>
