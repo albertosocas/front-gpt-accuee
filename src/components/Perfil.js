@@ -100,19 +100,19 @@ const Perfil = () => {
         <div className="flex items-center justify-center bg-gray-100">
             <div className="w-full p-6 bg-white rounded-lg shadow-md">
                 {/* SECCION INICIAL */}
-                <div className="flex flex-row justify-between border-b border-b-gray-500 mb-5">
+                <div className="flex flex-row justify-between border-b border-b-gray-500 lg:mb-5">
                     <h1 className="text-2xl font-bold m-2 pt-3 ">{username}</h1>
-                    <div className="flex flex-row w-[30%] justify-between">
+                    <div className="flex flex-row lg:w-[30%] lg:justify-between">
                         <button
                             onClick={handleRun}
-                            className="bg-gray-300 hover:bg-gray-400 text-white font-bold mr-10 mb-2 py-2 px-4 rounded-xl"
+                            className="bg-gray-300 hover:bg-gray-400 text-white font-bold mr-5 mb-2 py-2 px-4 rounded-xl"
                             title="play"
                         >
                             <img src={playIcon} alt="play" className="h-8 w-8" />
                         </button>
                         <button
                             onClick={handleProfile}
-                            className="bg-gray-300 hover:bg-gray-400 text-white font-bold mr-10 mb-2 py-2 px-4 rounded-xl"
+                            className="bg-gray-300 hover:bg-gray-400 text-white font-bold mr-5 mb-2 py-2 px-4 rounded-xl"
                             title="perfil"
                         >
                             <img src={avatarIcon} alt="perfil" className="h-8 w-8" />

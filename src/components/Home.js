@@ -361,26 +361,27 @@ const handleSelectPrompt = (event) => {
               <div className="w-full p-6 bg-white rounded-lg shadow-md">
         
               { /* SECCION INICIAL */ }
-                <div className='flex flex-row justify-between border-b border-b-gray-500 mb-5'>
+                <div className='border-b border-b-gray-500 mb-5 xs:flex flex-col lg:flex lg:flex-row lg:justify-between '>
                   <h1 className="text-2xl font-bold m-2 pt-3 ">Evaluador Automático</h1>
-                  <div className='flex flex-row w-[30%] justify-between'>
+                  <div className=' flex flex-row lg:w-[30%] justify-between'>
                     <p className='text-2xl font-bold m-2 '>{username}</p>
-                    <button
-                    onClick={handleProfile}
-                    className="bg-gray-300 hover:bg-gray-400 text-white font-bold  mb-2 py-2 px-4 rounded-xl "
-                    title="perfil"
-                  >
-                    <img src={avatarIcon} alt="perfil" className="h-8 w-8" />
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="bg-gray-300 hover:bg-gray-400 text-white font-bold mb-2 py-2 px-4 rounded-xl "
-                    title="cerrar"
-                  >
-                    <img src={cerrarIcon} alt="cerrar" className="h-8 w-8" />
-                  </button>
+                    <div className='flex flex-row sm:w-[35%] md:w-[50%] sm:justify-end lg:justify-between'>
+                      <button
+                      onClick={handleProfile}
+                      className="bg-gray-300 hover:bg-gray-400 text-white font-bold mr-5 mb-2 py-2 px-4 rounded-xl "
+                      title="perfil"
+                      >
+                      <img src={avatarIcon} alt="perfil" className="h-8 w-8" />
+                      </button>
+                      <button
+                      onClick={handleLogout}
+                      className="bg-gray-300 hover:bg-gray-400 text-white font-bold mb-2 py-2 px-4 rounded-xl  "
+                      title="cerrar"
+                      >
+                      <img src={cerrarIcon} alt="cerrar" className="h-8 w-8" />
+                      </button>
+                    </div>
                   </div>
-                  
                 </div>
         
                 { /* SECCION PROMPT */ }
@@ -399,8 +400,8 @@ const handleSelectPrompt = (event) => {
                           </option>
                       ))}
                   </select>
-                  <div className='flex flex-row'>
-                    <div className='w-[70%]'>
+                  <div className='sm:flex sm:flex-col lg:flex lg:flex-row'>
+                    <div className='lg:w-[70%]'>
                       <label htmlFor="prompt" className="block ml-1 mb-2 border-b border-b-gray-500">Ingrese el prompt</label>
                       <textarea
                         id="prompt"
@@ -410,7 +411,7 @@ const handleSelectPrompt = (event) => {
                         rows="4"
                       ></textarea>
                     </div>
-                    <div className='flex flex-col w-[30%] ml-4 justify-between'>
+                    <div className='flex flex-col lg:w-[30%] lg:ml-4 justify-between'>
                       <p className="block mb-2 ml-1 border-b border-b-gray-500">Parámetros</p>
                       <label htmlFor="evaluatorId" className="block px-5">ID del Evaluador:</label>
                       <input
@@ -451,7 +452,7 @@ const handleSelectPrompt = (event) => {
                           onChange={(e) => setTemperature(e.target.value)}
                           className="border border-gray-300 rounded-lg mx-5 mb-4"
                       />
-                      <div className=' rounded mb-5 flex flex-row justify-between '>
+                      <div className='rounded mb-5 flex flex-row justify-between '>
                       <button
                         onClick={handleClear}
                         className="bg-gray-300 hover:bg-gray-400 text-white font-bold ml-2 py-2 px-4 rounded-xl "
@@ -461,7 +462,7 @@ const handleSelectPrompt = (event) => {
                       </button>
                       <button
                         onClick={handleSavePrompt}
-                        className={`flex items-center justify-center bg-gray-400 hover:bg-gray-500 text-white font-bold w-[70%] py-2 px-2 rounded-xl ${isSaving || isSaved ? 'cursor-not-allowed' : ''}`} disabled={isSaving || isSaved}
+                        className={`flex items-center justify-center bg-gray-400 hover:bg-gray-500 text-white font-bold w-[70%] py-2 px-2 mr-2 rounded-xl ${isSaving || isSaved ? 'cursor-not-allowed' : ''}`} disabled={isSaving || isSaved}
                       >
                         {isSaved ? (
                           <img src={checkIcon} alt="Guardado" className="h-10 w-10" />
@@ -476,8 +477,8 @@ const handleSelectPrompt = (event) => {
                   
                 { /* SECCION RESPUESTAS */ }
                 <div className='mt-5 border border-solid p-4 bg-gray-100 rounded-lg'>
-                  <div className='flex flex-row'>
-                    <div className='flex flex-col w-[70%] '>
+                  <div className='sm:flex sm:flex-col lg:flex lg:flex-row'>
+                    <div className='flex flex-col lg:w-[70%] '>
                       <label htmlFor="studentResponses" className="block mb-2 border-b border-b-gray-500">Respuestas de los estudiantes</label>
                       <div>
                         {studentResponses.length > 0 && (
@@ -534,7 +535,7 @@ const handleSelectPrompt = (event) => {
                       </div>
                       )}
                     </div>
-                    <div className='flex flex-col w-[30%] ml-4'>
+                    <div className='flex flex-col lg:w-[30%] lg:ml-4'>
                       <label htmlFor="fileUpload" className="block mb-2">Cargar respuestas desde archivo (.txt, .csv, .xlsx):</label>
                       <input
                         id="fileUpload"
