@@ -30,11 +30,10 @@ const Perfil = () => {
                 const token = localStorage.getItem('token');
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 
-                const userResponse = await axios.get('http://localhost:5000/api/auth/profile', { headers });
+                const userResponse = await axios.get('http://10.22.143.52:5000/api/auth/profile', { headers });
                 setUserData(userResponse.data);
 
-                // Obtener prompts del usuario
-                const promptsResponse = await axios.get('http://localhost:5000/api/prompts/user-prompts', { headers });
+                const promptsResponse = await axios.get('http://10.22.143.52:5000/api/prompts/user-prompts', { headers });
                 setUserPrompts(promptsResponse.data);
             } catch (error) {
                 console.error('Error al cargar los datos del perfil:', error);
@@ -63,7 +62,7 @@ const Perfil = () => {
             const token = localStorage.getItem('token');
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-            await axios.delete(`http://localhost:5000/api/prompts/delete/${id}`, { headers });
+            await axios.delete(`http://10.22.143.52:5000/api/prompts/delete/${id}`, { headers });
 
             setUserPrompts((prevPrompts) => prevPrompts.filter((prompt) => prompt._id !== id));
 
@@ -83,13 +82,13 @@ const Perfil = () => {
             const token = localStorage.getItem('token');
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
     
-            const response = await axios.put(`http://localhost:5000/api/prompts/edit/${editingPrompt}`, updatedPrompt, {
+            const response = await axios.put(`http://10.22.143.52:5000/api/prompts/edit/${editingPrompt}`, updatedPrompt, {
                 headers,
             });
     
             console.log('Prompt actualizado:', response.data);
             setEditingPrompt(null); 
-            const promptsResponse = await axios.get('http://localhost:5000/api/prompts/user-prompts', { headers });
+            const promptsResponse = await axios.get('http://10.22.143.52:5000/api/prompts/user-prompts', { headers });
             setUserPrompts(promptsResponse.data);
         } catch (error) {
             console.error('Error al actualizar el prompt:', error);

@@ -17,7 +17,7 @@ const Login = ({ setIsAuthenticated }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post('http://10.22.143.52:5000/api/auth/login', {
         username,
         password,
       });

@@ -9,19 +9,18 @@ const Register = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Manejar el envío del formulario
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Verificar que todos los campos estén completos
     if (!username || !email || !password) {
       setError('Todos los campos son obligatorios');
       return;
     }
 
     try {
-      // Realizar la solicitud POST para registrar al usuario
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
+
+      const response = await axios.post('http://10.22.143.52:5000/api/auth/register', {
         username,
         email,
         password,

@@ -65,14 +65,14 @@ const Home = () => {
 
   useEffect(() => {
     const fetchPrompts = async () => {
-        const token = localStorage.getItem('token'); // Obtén el token
+        const token = localStorage.getItem('token');
         if (!token) {
             alert('No está autenticado. Inicie sesión para cargar sus prompts.');
             return;
         }
 
         try {
-            const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
+            const response = await axios.get('http://10.22.143.52:5000/api/prompts/user-prompts', {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -108,7 +108,7 @@ const Home = () => {
             responsesProcessed: responsesProcessed
         });
 
-        await axios.post('http://localhost:5000/api/auth/actualizar', {
+        await axios.post('http://10.22.143.52:5000/api/auth/actualizar', {
             inputTokens: stats.input_tokens,
             outputTokens: stats.output_tokens,
             responsesProcessed: responsesProcessed
@@ -134,7 +134,7 @@ const Home = () => {
         setIsLoading(true);
     
         try {
-          const response = await axios.post('http://localhost:4000/evaluate', {
+          const response = await axios.post('http://10.22.143.52:4000/evaluate', {
             prompt,
             studentResponses: selectedResponses,
             evaluator_id: evaluatorId,
@@ -181,11 +181,9 @@ const Home = () => {
           return;
         }
       
-        // Selecciona respuestas aleatoriamente
         const shuffledResponses = [...studentResponses].sort(() => 0.5 - Math.random());
         const selectedRandomResponses = shuffledResponses.slice(0, count);
       
-        // Actualiza las respuestas seleccionadas con las seleccionadas aleatoriamente
         setSelectedResponses(selectedRandomResponses);
   };
     
@@ -218,20 +216,19 @@ const Home = () => {
             const text = e.target.result;
       
             if (fileType === 'txt') {
-              // Lógica para archivos .txt
+              
               const lines = text.split('\n');
               const parsedResponses = lines.filter(line => line.trim() !== '');
               setStudentResponses(parsedResponses);
               setShowSelectColumn(false);
             } else if (fileType === 'csv') {
-              // Lógica para archivos .csv
+              
               const lines = text.split('\n');
               const parsedResponses = lines.map(line => line.split(separator)).filter(line => line.length > 0);
       
-              // Asignar las columnas (primera fila)
               const headers = parsedResponses[0];
-              setFileColumns(headers);  // Guardamos las columnas
-              setStudentResponses(parsedResponses);  // Guardamos todos los datos
+              setFileColumns(headers);  
+              setStudentResponses(parsedResponses);  
               setShowSelectColumn(true);
             }
           };
@@ -239,7 +236,7 @@ const Home = () => {
           if (fileType === 'txt' || fileType === 'csv') {
             reader.readAsText(file);
           } else if (fileType === 'xlsx') {
-            // Lógica para archivos .xlsx
+
             reader.onload = (e) => {
               const data = new Uint8Array(e.target.result);
               const workbook = XLSX.read(data, { type: 'array' });
@@ -247,10 +244,9 @@ const Home = () => {
               const worksheet = workbook.Sheets[sheetName];
               const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
       
-              // Asignar las columnas (primera fila)
               const headers = sheetData[0];
-              setFileColumns(headers);  // Guardamos las columnas
-              setStudentResponses(sheetData);  // Guardamos todos los datos
+              setFileColumns(headers);
+              setStudentResponses(sheetData);
               setShowSelectColumn(true);
             };
             reader.readAsArrayBuffer(file);
@@ -271,7 +267,7 @@ const Home = () => {
     
         try {
             await axios.post(
-                'http://localhost:5000/api/prompts',
+                'http://10.22.143.52:5000/api/prompts',
                 {
                     prompt,
                     evaluator_id: evaluatorId,
@@ -294,17 +290,17 @@ const Home = () => {
     
   const handleLoadSavedPrompt = async () => {
     try {
-        const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
+        const response = await axios.get('http://10.22.143.52:5000/api/prompts/user-prompts', {
             headers: getAuthHeaders(),
         });
-        setSavedPrompts(response.data); // Guarda los prompts en el estado
+        setSavedPrompts(response.data);
     } catch (error) {
         console.error('Error al cargar los prompts:', error);
     }
   };
 
 const handleSelectPrompt = (event) => {
-  const evaluatorId = event.target.value; // Obtener el ID seleccionado
+  const evaluatorId = event.target.value;
   setSelectedEvaluatorId(evaluatorId);
 
   const selectedPromptData = savedPrompts.find((prompt) => prompt.evaluator_id === evaluatorId);
@@ -334,7 +330,6 @@ const handleSelectPrompt = (event) => {
             return;
           }
         
-          // Verificar si la respuesta ya existe
           if (studentResponses.includes(trimmedResponse)) {
             alert('Esta respuesta ya ha sido añadida.');
             return;
@@ -348,12 +343,11 @@ const handleSelectPrompt = (event) => {
 
   const handleColumnSelection = (e) => {
             const selectedColumn = e.target.value;
-            const columnIndex = fileColumns.indexOf(selectedColumn);  // Buscar el índice de la columna seleccionada
+            const columnIndex = fileColumns.indexOf(selectedColumn); 
             
-            // Filtrar los datos de esa columna
             const columnData = studentResponses.map(row => row[columnIndex]).filter(value => value);
             
-            setStudentResponses(columnData);  // Actualizamos las respuestas con la columna seleccionada
+            setStudentResponses(columnData); 
   };
 
           return (

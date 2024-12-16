@@ -21,7 +21,9 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "start-frontend": "npm start",
-    "start-api": "cd backend && node app.js"
+    "start-api": "cd backend && node app.js",
+    "start-back": "python back-gpt-accuee/app.py",
+    "start-app": "concurrently \"npm run start-api\" \"npm run start-back\" \"npm run start-frontend\""
   },
   "eslintConfig": {
     "extends": [
