@@ -20,6 +20,8 @@ const Home = () => {
   const [result, setResult] = useState('');
   const [stats, setStats] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessagePrompt, setErrorMessagePrompt] = useState('');
+  const [errorMessageEvaluatePrompt, setErrorMessageEvaluatePrompt] = useState('');
   const [savedPrompts, setSavedPrompts] = useState([]);
   const [setSelectedPrompt] = useState('');
   const [queryBatchLength, setQueryBatchLength] = useState(20);
@@ -30,14 +32,22 @@ const Home = () => {
   const [isAddingResponse, setIsAddingResponse] = useState(false);
   const [newResponse, setNewResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingEvaluate, setIsLoadingEvaluate] = useState(false);
   const [separator, setSeparator] = useState(',');
   const [fileColumns, setFileColumns] = useState([]);
-  const [selectedColumn] = useState('');
   const [showSelectColumn, setShowSelectColumn] = useState(false);
   const [username, setUsername] = useState('');
   const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isPromptLoaded, setIsPromptLoaded] = useState(false);
+  const [selectedPromptId, setSelectedPromptId] = useState(null);
+  const [randomlySelectedCount, setRandomlySelectedCount] = useState(0);
+  const [analysis, setAnalysis] = useState(null);
+  const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
+  const [fileData, setFileData] = useState(null);
+  const [selectedColumn, setSelectedColumn] = useState("");
+
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
@@ -72,7 +82,7 @@ const Home = () => {
         }
 
         try {
-            const response = await axios.get('http://10.22.143.52:5000/api/prompts/user-prompts', {
+            const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -85,6 +95,16 @@ const Home = () => {
     fetchPrompts();
   }, []);
 
+  const handleFileUploadWithConfirmation = (e) => {
+    if (studentResponses.length > 0) {
+      const confirmLoad = window.confirm('Estás seguro de cargar nuevas respuestas? Ya tienes unas respuestas.');
+      if (!confirmLoad) {
+        return;
+      }
+    }
+
+    handleFileUpload(e);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('token'); 
@@ -102,13 +122,7 @@ const Home = () => {
 
   const updateStats = async (stats, responsesProcessed) => {
     try {
-        console.log('Valores para actualizar estadísticas:', {
-            inputTokens: stats.input_tokens,
-            outputTokens: stats.output_tokens,
-            responsesProcessed: responsesProcessed
-        });
-
-        await axios.post('http://10.22.143.52:5000/api/auth/actualizar', {
+        await axios.post('http://localhost:5000/api/auth/actualizar', {
             inputTokens: stats.input_tokens,
             outputTokens: stats.output_tokens,
             responsesProcessed: responsesProcessed
@@ -118,7 +132,6 @@ const Home = () => {
             }
         });
 
-        console.log('Estadísticas actualizadas correctamente');
     } catch (error) {
         console.error('Error al actualizar las estadísticas:', error);
     }
@@ -126,7 +139,10 @@ const Home = () => {
 
   const handleSubmit = async () => {
         if (!prompt || selectedResponses.length === 0 || !evaluatorId) {
-          setErrorMessage('Por favor, complete todos los campos: el prompt, las respuestas de los estudiantes y el ID del evaluador.');
+          setErrorMessage('Por favor, complete todos los campos.');
+          setTimeout(() => {
+            setErrorMessage(''); 
+          }, 3000);
           return;
         }
     
@@ -134,13 +150,13 @@ const Home = () => {
         setIsLoading(true);
     
         try {
-          const response = await axios.post('http://10.22.143.52:4000/evaluate', {
+          const response = await axios.post('http://localhost:4000/evaluate', {
             prompt,
             studentResponses: selectedResponses,
             evaluator_id: evaluatorId,
             gpt_manager: gptManager,
             query_batch_length: queryBatchLength,
-            temperature
+            temperature,
           });
           
           const stats = response.data.stats;
@@ -174,17 +190,24 @@ const Home = () => {
   };
     
   const handleRandomSelect = () => {
-        const count = parseInt(randomSelectCount, 10);
-        
-        if (count > studentResponses.length) {
-          alert(`El número ingresado excede el número de respuestas disponibles (${studentResponses.length}).`);
-          return;
-        }
+    if (randomSelectCount > 0) {
+      const totalResponses = studentResponses.length;
+      const countToSelect = Math.min(randomSelectCount, totalResponses);
+  
+      const shuffledResponses = [...studentResponses];
+      shuffledResponses.sort(() => Math.random() - 0.5); 
+  
+      const selected = shuffledResponses.slice(0, countToSelect); 
+      setSelectedResponses(selected);
+  
       
-        const shuffledResponses = [...studentResponses].sort(() => 0.5 - Math.random());
-        const selectedRandomResponses = shuffledResponses.slice(0, count);
-      
-        setSelectedResponses(selectedRandomResponses);
+      setRandomlySelectedCount(countToSelect);
+      setTimeout(() => {
+        setRandomlySelectedCount(0);
+    }, 3000);
+    } else {
+      setRandomlySelectedCount(0);
+    }
   };
     
   const handleDownload = () => {
@@ -203,71 +226,86 @@ const Home = () => {
     setStudentResponses('');
     setResult('');
     setShowSelectColumn(false);
-    setSelectedEvaluatorId('')
+    setSelectedEvaluatorId('');
+    setIsPromptLoaded(false);
+    setSelectedPromptId(null);
+    setIsAnalysisVisible(false)
   };
 
   const handleFileUpload = (event) => {
-        const file = event.target.files[0];
-        if (file) {
-          const fileType = file.name.split('.').pop().toLowerCase();
-      
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const text = e.target.result;
-      
-            if (fileType === 'txt') {
-              
-              const lines = text.split('\n');
-              const parsedResponses = lines.filter(line => line.trim() !== '');
-              setStudentResponses(parsedResponses);
-              setShowSelectColumn(false);
-            } else if (fileType === 'csv') {
-              
-              const lines = text.split('\n');
-              const parsedResponses = lines.map(line => line.split(separator)).filter(line => line.length > 0);
-      
-              const headers = parsedResponses[0];
-              setFileColumns(headers);  
-              setStudentResponses(parsedResponses);  
-              setShowSelectColumn(true);
-            }
-          };
-      
-          if (fileType === 'txt' || fileType === 'csv') {
-            reader.readAsText(file);
-          } else if (fileType === 'xlsx') {
-
-            reader.onload = (e) => {
-              const data = new Uint8Array(e.target.result);
-              const workbook = XLSX.read(data, { type: 'array' });
-              const sheetName = workbook.SheetNames[0];
-              const worksheet = workbook.Sheets[sheetName];
-              const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      
-              const headers = sheetData[0];
-              setFileColumns(headers);
-              setStudentResponses(sheetData);
-              setShowSelectColumn(true);
-            };
-            reader.readAsArrayBuffer(file);
-          } else {
-            setErrorMessage('Tipo de archivo no soportado. Por favor, cargue un archivo .txt, .csv o .xlsx');
-          }
+    const file = event.target.files[0];
+    if (file) {
+      const fileType = file.name.split('.').pop().toLowerCase();
+  
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+  
+        if (fileType === 'txt') {
+          const lines = text.split('\n');
+          const parsedResponses = lines.filter(line => line.trim() !== '');
+          setStudentResponses(parsedResponses);
+          setShowSelectColumn(false);
+        } else if (fileType === 'csv') {
+          const lines = text.split('\n');
+          const parsedResponses = lines.map(line => line.split(separator)).filter(line => line.length > 0);
+  
+          const headers = parsedResponses[0];
+          setFileColumns(headers);
+          setStudentResponses(parsedResponses);
+          setShowSelectColumn(true);
+        } else if (fileType === 'xlsx') {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const sheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[sheetName];
+          const sheetData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+  
+          const headers = sheetData[0];
+          setFileColumns(headers);
+          setStudentResponses(sheetData);
+          setShowSelectColumn(true);
+        } else {
+          setErrorMessage('Tipo de archivo no soportado. Por favor, cargue un archivo .txt, .csv o .xlsx');
+          setTimeout(() => {
+            setErrorMessage('');
+          }, 3000);
         }
+      };
+  
+      if (fileType === 'txt' || fileType === 'csv') {
+        reader.readAsText(file);
+      } else if (fileType === 'xlsx') {
+        reader.readAsArrayBuffer(file);
+      }
+    }
+  };  
+
+  const handleFileDrop = (e) => {
+    e.preventDefault(); 
+    const files = e.dataTransfer.files;
+  
+    if (files.length > 0) {
+      handleFileUploadWithConfirmation({ target: { files } });
+    }
   };
 
   const handleSavePrompt = async () => {
-        const batchLength = parseInt(queryBatchLength, 10);
-        if (!prompt || !evaluatorId || !gptManager || isNaN(batchLength)) {
-            setErrorMessage('Por favor, complete todos los campos requeridos.');
-            return;
-        }
-        setErrorMessage('');
-        setIsSaving(true);
-    
-        try {
-            await axios.post(
-                'http://10.22.143.52:5000/api/prompts',
+    const batchLength = parseInt(queryBatchLength, 10);
+    if (!prompt || !evaluatorId || !gptManager || isNaN(batchLength)) {
+        setErrorMessagePrompt('Complete todos los campos requeridos.');
+        setTimeout(() => {
+          setErrorMessagePrompt(''); 
+      }, 3000);
+        return;
+    }
+    setErrorMessagePrompt('');
+    setIsSaving(true);
+
+    try {
+        if (isPromptLoaded) {
+            await axios.put(
+                `http://localhost:5000/api/prompts/${evaluatorId}`,
                 {
                     prompt,
                     evaluator_id: evaluatorId,
@@ -277,20 +315,37 @@ const Home = () => {
                 },
                 { headers: getAuthHeaders() }
             );
-            setIsSaving(false); 
-            setIsSaved(true); 
-            setTimeout(() => {
-              setIsSaved(false);
-            }, 3000);
-        } catch (error) {
-            console.error('Error al guardar el prompt:', error);
-            setIsSaving(false);
+        } else {
+            await axios.post(
+                'http://localhost:5000/api/prompts',
+                {
+                    prompt,
+                    evaluator_id: evaluatorId,
+                    gpt_manager: gptManager,
+                    query_batch_length: batchLength,
+                    temperature,
+                },
+                { headers: getAuthHeaders() }
+            );
         }
-  };
+
+        setIsSaving(false);
+        setIsSaved(true);
+        setIsPromptLoaded(true); 
+        setErrorMessagePrompt('Prompt guardado correctamente');
+        setTimeout(() => {
+            setIsSaved(false);
+            setErrorMessagePrompt(''); 
+        }, 3000);
+    } catch (error) {
+        console.error('Error al guardar o actualizar el prompt:', error);
+        setIsSaving(false);
+    }
+};
     
   const handleLoadSavedPrompt = async () => {
     try {
-        const response = await axios.get('http://10.22.143.52:5000/api/prompts/user-prompts', {
+        const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
             headers: getAuthHeaders(),
         });
         setSavedPrompts(response.data);
@@ -299,19 +354,66 @@ const Home = () => {
     }
   };
 
-const handleSelectPrompt = (event) => {
-  const evaluatorId = event.target.value;
-  setSelectedEvaluatorId(evaluatorId);
+  const handleSelectPrompt = (event) => {
+    const evaluatorId = event.target.value;
+    setSelectedEvaluatorId(evaluatorId);
+  
+    if (evaluatorId === "") {
+      setPrompt("");
+      setEvaluatorId("");
+      setSelectedEvaluatorId('')
+      setIsPromptLoaded(false);
+      setSelectedPromptId(null);
+      setIsAnalysisVisible(false)
+    } else {
+      const selectedPromptData = savedPrompts.find((prompt) => prompt.evaluator_id === evaluatorId);
+  
+      if (selectedPromptData) {
+        setPrompt(selectedPromptData.prompt);
+        setEvaluatorId(selectedPromptData.evaluator_id);
+        setGptManager(selectedPromptData.gpt_manager);
+        setQueryBatchLength(selectedPromptData.query_batch_length);
+        setTemperature(selectedPromptData.temperature || 0.5);
+        setIsPromptLoaded(true);
+        setSelectedPromptId(selectedPromptData._id);
+        setIsAnalysisVisible(false)
+      }
+    }
+  };
+  
+  const updatePrompt = async () => {
+    const updatedPromptData = {
+      prompt: prompt,  
+      evaluator_id: evaluatorId,
+      gpt_manager: gptManager,
+      query_batch_length: queryBatchLength,
+      temperature: temperature
+    };
+    
+    try {
 
-  const selectedPromptData = savedPrompts.find((prompt) => prompt.evaluator_id === evaluatorId);
+      const response = await axios.put(
+        `http://localhost:5000/api/prompts/edit/${selectedPromptId}`, 
+        updatedPromptData, 
+        { headers: getAuthHeaders() }
+      );
 
-  if (selectedPromptData) {
-      setPrompt(selectedPromptData.prompt);
-      setEvaluatorId(selectedPromptData.evaluator_id);
-      setGptManager(selectedPromptData.gpt_manager);
-      setQueryBatchLength(selectedPromptData.query_batch_length);
-      setTemperature(selectedPromptData.temperature || 0.5);
-  }
+      const updatedPrompt = response.data.updatedPrompt;
+
+      setPrompt(updatedPrompt.prompt);
+      setEvaluatorId(updatedPrompt.evaluator_id);
+      setGptManager(updatedPrompt.gpt_manager);
+      setQueryBatchLength(updatedPrompt.query_batch_length);
+      setTemperature(updatedPrompt.temperature);
+      setIsPromptLoaded(true);
+      setErrorMessagePrompt('Prompt actualizado correctamente');
+      setTimeout(() => {
+        setErrorMessagePrompt(''); 
+      }, 3000);
+     
+    } catch (error) {
+      console.error('Error al actualizar el prompt:', error);
+    }
 };
   
   const handleAddResponseClick = () => {
@@ -342,12 +444,42 @@ const handleSelectPrompt = (event) => {
   };
 
   const handleColumnSelection = (e) => {
-            const selectedColumn = e.target.value;
-            const columnIndex = fileColumns.indexOf(selectedColumn); 
-            
-            const columnData = studentResponses.map(row => row[columnIndex]).filter(value => value);
-            
-            setStudentResponses(columnData); 
+    const selectedColumn = e.target.value;
+    setSelectedColumn(selectedColumn);
+    
+    const columnIndex = fileColumns.indexOf(selectedColumn);
+    if (columnIndex === -1) return; 
+  
+ 
+    const columnData = studentResponses.map(row => row[columnIndex]).filter(value => value);
+  
+    setStudentResponses(columnData);
+  };
+
+  const handleAnalyzePrompt = async () => {
+    if (!prompt) {
+      setErrorMessageEvaluatePrompt('Por favor, ingrese un prompt.');
+        setTimeout(() => {
+          setErrorMessageEvaluatePrompt(''); 
+      }, 3000);
+      return;
+    }
+
+    setIsLoadingEvaluate(true);
+
+    try {
+      const response = await axios.post('http://localhost:4000/analyze-prompt', { prompt });
+      setAnalysis(response.data.analysis);
+      setIsAnalysisVisible(true)
+    } catch (error) {
+      console.error('Error al analizar el prompt:', error);
+    }finally {
+      setIsLoadingEvaluate(false);
+    }
+  };
+  
+  const handleClose = () => {
+      setIsAnalysisVisible(false);
   };
 
           return (
@@ -379,8 +511,8 @@ const handleSelectPrompt = (event) => {
                 </div>
         
                 { /* SECCION PROMPT */ }
-                <div className='border border-solid p-4 bg-gray-100 rounded-lg'>
-                  <label htmlFor="savedPrompts" className="block ml-1 mb-2 border-b border-b-gray-500">Seleccione un prompt guardado</label>
+                <div className=' border border-solid p-4 bg-gray-100 rounded-lg'>
+                  <label htmlFor="savedPrompts" className="block ml-1 mb-2 border-b border-b-gray-500 text-xl font-bold font-sans">Seleccione un prompt guardado</label>
                   <select
                       id="savedPrompts"
                       value={selectedEvaluatorId}
@@ -401,13 +533,13 @@ const handleSelectPrompt = (event) => {
                         id="prompt"
                         value={prompt}
                         onChange={handlePromptChange}
-                        className="border border-gray-300 rounded-lg px-4 py-2 w-full h-96 mb-4 resize-none"
+                        className="border border-gray-300 rounded-lg px-4 py-2 w-full h-96 lg:h-[95%] mb-4 resize-none"
                         rows="4"
                       ></textarea>
                     </div>
                     <div className='flex flex-col lg:w-[30%] lg:ml-4 justify-between'>
                       <p className="block mb-2 ml-1 border-b border-b-gray-500">Parámetros</p>
-                      <label htmlFor="evaluatorId" className="block px-5">ID del Evaluador:</label>
+                      <label htmlFor="evaluatorId" className="block px-5 mt-2">ID del Evaluador:</label>
                       <input
                         type="text"
                         id="evaluatorId"
@@ -415,7 +547,7 @@ const handleSelectPrompt = (event) => {
                         onChange={(e) => setEvaluatorId(e.target.value)}
                         className="border border-gray-300 rounded-xl px-4 py-2 mx-5 mb-2"
                       />
-                      <label htmlFor="gptManager" className="block px-5">Selecciona el GPT Manager:</label>
+                      <label htmlFor="gptManager" className="block px-5 mt-2">Selecciona el GPT Manager:</label>
                       <select
                         id="gptManager"
                         value={gptManager}
@@ -423,9 +555,10 @@ const handleSelectPrompt = (event) => {
                         className="border border-gray-300 rounded-xl px-4 py-2 mx-5 mb-3"
                       >
                       <option value="gpt-4">GPT-4</option>
+                      <option value="gpt-4o">GPT-4o</option>
                       <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
                       </select>
-                      <div className='flex flex-row items-center w-full mb-2 px-5 '>
+                      <div className='flex flex-row items-center w-full mb-2 px-5 mt-2 '>
                         <label htmlFor="queryBatchLength" >Batch Length:</label>
                         <input
                           type="number"
@@ -435,7 +568,7 @@ const handleSelectPrompt = (event) => {
                           className="border border-gray-300 rounded-xl h-10 w-20 ml-3 p-1"
                         />
                       </div>
-                      <label htmlFor="temperature" className="block px-5">Temperatura: {temperature} </label>
+                      <label htmlFor="temperature" className="block px-5 mt-2">Temperatura: {temperature} </label>
                       <input
                           type="range"
                           id="temperature"
@@ -446,34 +579,105 @@ const handleSelectPrompt = (event) => {
                           onChange={(e) => setTemperature(e.target.value)}
                           className="border border-gray-300 rounded-lg mx-5 mb-4"
                       />
-                      <div className='rounded mb-5 flex flex-row justify-between '>
-                      <button
-                        onClick={handleClear}
-                        className="bg-gray-300 hover:bg-gray-400 text-white font-bold ml-2 py-2 px-4 rounded-xl "
-                        title="Clean"
-                      >
-                        <img src={clearIcon} alt="Limpiar" className="h-10 w-10" />
-                      </button>
-                      <button
-                        onClick={handleSavePrompt}
-                        className={`flex items-center justify-center bg-gray-400 hover:bg-gray-500 text-white font-bold w-[70%] py-2 px-2 mr-2 rounded-xl ${isSaving || isSaved ? 'cursor-not-allowed' : ''}`} disabled={isSaving || isSaved}
-                      >
-                        {isSaved ? (
-                          <img src={checkIcon} alt="Guardado" className="h-10 w-10" />
-                        ) : (
-                          'Guardar Prompt'
-                        )}
-                      </button>
+                      <div className='rounded mb-5 flex flex-col mt-2'>
+                        <div className='flex flex-row justify-between'>
+                          <button
+                            onClick={handleClear}
+                            className="bg-gray-300 hover:bg-gray-400 text-white font-bold ml-4 py-2 px-4 rounded-xl "
+                            title="Clean"
+                          >
+                            <img src={clearIcon} alt="Limpiar" className="h-10 w-10" />
+                          </button>
+                          <button
+                            onClick={isPromptLoaded ? updatePrompt : handleSavePrompt}
+                            className={`flex items-center justify-center bg-gray-400 hover:bg-gray-500 text-white font-bold w-[50%] sm:w-[70%] lg:w-[60%] py-2 px-2 mr-2 rounded-xl ${isSaving || isSaved ? 'cursor-not-allowed' : ''}`}
+                            disabled={isSaving || isSaved}
+                          >
+                            {isSaved ? (
+                              <img src={checkIcon} alt="Guardado" className="h-10 w-10" />
+                            ) : (
+                              isPromptLoaded ? 'Actualizar Prompt' : 'Guardar Prompt'
+                            )}
+                          </button>
+                        </div>
+                        <div className='mt-1 min-h-8'>
+                          {errorMessagePrompt && (
+                            <div className="ml-4 text-black-500 lg:flex lg:justify-end lg:mr-2">
+                              {errorMessagePrompt}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className='ml-4 mr-2'>
+                        <button 
+                        onClick={handleAnalyzePrompt}
+                        className='bg-gray-400 hover:bg-gray-500 text-white w-full font-bold py-2 px-4 rounded-xl'
+                        disabled={isLoading}
+                        >
+                        {isLoadingEvaluate ? (
+                            <img src={loadingIcon} alt="Cargando..." className="h-7 w-7 inline-block" />
+                          ) : (
+                            'Evaluar mi prompt'
+                          )}
+                          </button>
+                        <div className='mt-2 min-h-6 md:mr-2'>
+                          {errorMessageEvaluatePrompt && (
+                            <div className="ml-4 text-black-500 lg:flex lg:justify-end lg:mr-2">
+                              {errorMessageEvaluatePrompt}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
+                  {analysis && isAnalysisVisible && (
+                    <div className= "flex flex-col bg-gray-100 p-6 rounded-lg shadow-md mt-6 space-y-4">
+                      <div className='flex flex-col md:flex-row justify-between items-center'>
+                        <h2 className="text-xl font-semibold text-gray-800">Resultado del análisis:</h2>
+                        <button
+                         onClick={handleClose}
+                         className='bg-gray-400 mt-2 md:mt-0 hover:bg-gray-500 text-white w-full md:w-[25%] font-bold py-2 px-4 rounded-xl '
+                        >
+                          Cerrar análisis
+                         </button>
+                      </div>
+                        <div className="space-y-4">
+                          {/* Descripción */}
+                          <div className="bg-white p-4 rounded-lg shadow-md">
+                            <h3 className="text-lg font-medium text-gray-700">Descripción</h3>
+                            <p className="text-gray-600">{analysis?.descripción?.justificación}</p>
+                            <span className={`text-sm font-semibold ${analysis?.descripción?.valor === 'correcto' ? 'text-green-600' : analysis?.descripción?.valor === 'incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                              Valor: {analysis?.descripción?.valor}
+                            </span>
+                          </div>
+
+                          {/* Rúbrica */}
+                          <div className="bg-white p-4 rounded-lg shadow-md">
+                            <h3 className="text-lg font-medium text-gray-700">Rúbrica</h3>
+                            <p className="text-gray-600">{analysis?.rúbrica?.justificación}</p>
+                            <span className={`text-sm font-semibold ${analysis?.rúbrica?.valor === 'correcto' ? 'text-green-600' : analysis?.rúbrica?.valor === 'incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                              Valor: {analysis?.rúbrica?.valor}
+                            </span>
+                          </div>
+
+                          {/* Resultado */}
+                          <div className="bg-white p-4 rounded-lg shadow-md">
+                            <h3 className="text-lg font-medium text-gray-700">Resultado</h3>
+                            <p className="text-gray-600">{analysis?.resultado?.justificación}</p>
+                            <span className={`text-sm font-semibold ${analysis?.resultado?.valor === 'correcto' ? 'text-green-600' : analysis?.resultado?.valor === 'incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                              Valor: {analysis?.resultado?.valor}
+                            </span>
+                          </div>
+                        </div>
+                    </div>
+                  )}
                 </div>  
-                  
+                
                 { /* SECCION RESPUESTAS */ }
                 <div className='mt-5 border border-solid p-4 bg-gray-100 rounded-lg'>
                   <div className='sm:flex sm:flex-col lg:flex lg:flex-row'>
                     <div className='flex flex-col lg:w-[70%] '>
-                      <label htmlFor="studentResponses" className="block mb-2 border-b border-b-gray-500">Respuestas de los estudiantes</label>
+                      <label htmlFor="studentResponses" className="block mb-2 border-b border-b-gray-500 text-xl font-bold font-sans">Respuestas de los estudiantes</label>
                       <div>
                         {studentResponses.length > 0 && (
                           <div className='max-h-96 overflow-y-auto'>
@@ -530,16 +734,25 @@ const handleSelectPrompt = (event) => {
                       )}
                     </div>
                     <div className='flex flex-col lg:w-[30%] lg:ml-4'>
-                      <label htmlFor="fileUpload" className="block mb-2">Cargar respuestas desde archivo (.txt, .csv, .xlsx):</label>
-                      <input
-                        id="fileUpload"
-                        type="file"
-                        accept=".txt,.csv,.xlsx"
-                        onChange={handleFileUpload}
-                        className="border border-gray-300 rounded-lg px-4 py-2 w-full mb-4"
-                      />
+                      <label htmlFor="fileUpload" className="block text-lg font-semibold mb-2 text-gray-800">Cargar respuestas desde archivo (.txt, .csv, .xlsx):</label>
+                      <div
+                        className="border-2 border-dashed border-gray-400 rounded-lg p-8 text-center w-full bg-gray-50 hover:bg-gray-100 transition-all cursor-pointer"
+                        onClick={() => document.getElementById('fileUpload').click()} 
+                        onDrop={handleFileDrop}
+                        onDragOver={(e) => e.preventDefault()}
+                      >
+                        <span className="text-gray-500">Arrastra aquí tu archivo o haz clic para seleccionar uno</span>
+                        
+                        <input
+                          id="fileUpload"
+                          type="file"
+                          accept=".txt,.csv,.xlsx"
+                          onChange={handleFileUploadWithConfirmation}
+                          className="hidden"
+                        />
+                      </div>
                       <div className="mb-4">
-                        <label htmlFor="separator" className="block mb-2">Indique el separador de campos (por defecto: ","):</label>
+                        <label htmlFor="separator" className="block mb-2 mt-2">Indique el separador de campos (por defecto: ","):</label>
                         <input
                           type="text"
                           id="separator"
@@ -575,8 +788,9 @@ const handleSelectPrompt = (event) => {
                         />
                         <label htmlFor="selectAll">Seleccionar todas las respuestas</label>
                       </div>
-                      <div className="flex items-center mb-4">
-                        <input
+                      <div className="flex flex-col mb-4 min-h-20">
+                        <div className='flex items-center'>
+                          <input
                           type="number"
                           id="randomSelectCount"
                           value={randomSelectCount}
@@ -590,10 +804,19 @@ const handleSelectPrompt = (event) => {
                         >
                           Seleccionar al azar
                         </button>
+                        </div>
+                        
+                        <div>
+                        {randomlySelectedCount > 0 && (
+                          <div className="text-black-500 mt-1">
+                            Se han seleccionado {randomlySelectedCount} respuestas al azar.
+                          </div>
+                        )}
+                      </div>
                       </div>
                       <button
                           onClick={handleSubmit}
-                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 mt-2 rounded-xl"
+                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl"
                           disabled={isLoading}
                         >
                           {isLoading ? (
@@ -606,7 +829,7 @@ const handleSelectPrompt = (event) => {
                   </div>
         
                   {errorMessage && (
-                    <div className="text-red-500 mb-4">
+                    <div className="text-red-500 mb-4 mt-3 lg:flex lg:justify-end lg:mr-2 ">
                       {errorMessage}
                     </div>
                   )}

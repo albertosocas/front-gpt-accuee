@@ -17,7 +17,7 @@ const Login = ({ setIsAuthenticated }) => {
     }
 
     try {
-      const response = await axios.post('http://10.22.143.52:5000/api/auth/login', {
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
         username,
         password,
       });
@@ -26,8 +26,6 @@ const Login = ({ setIsAuthenticated }) => {
         const token = response.data.token;
         localStorage.setItem('token', token);
         localStorage.setItem('username', username);
-      
-        console.log("Token almacenado:", token);
         setIsAuthenticated(true);
         navigate('/home');
 
