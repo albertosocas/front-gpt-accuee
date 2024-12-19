@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import config from '../config';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -8,6 +9,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const apiUrl = `${config.server}`;
 
 
   const handleSubmit = async (e) => {
@@ -20,7 +22,7 @@ const Register = () => {
 
     try {
 
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
+      const response = await axios.post(`http://${apiUrl}:5000/api/auth/register`, {
         username,
         email,
         password,

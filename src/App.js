@@ -5,10 +5,12 @@ import Register from './components/Register';
 import Home from './components/Home';
 import Perfil from './components/Perfil';
 import axios from 'axios';
+import config from './config';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [loading, setLoading] = useState(true);
+  const apiUrl = `${config.server}`;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -22,7 +24,7 @@ const App = () => {
       }
   
       try {
-        const response = await axios.get('http://localhost:5000/api/auth/profile', {
+        const response = await axios.get(`http://${apiUrl}:5000/api/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
   

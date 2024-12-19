@@ -8,52 +8,67 @@ import loadingIcon from '../assets/loading.gif';
 import cerrarIcon from '../assets/cerrar.png';
 import avatarIcon from '../assets/avatar.png';
 import checkIcon from '../assets/check.png';
+import config from '../config';
+
 
 
 
 
 const Home = () => {
   const navigate = useNavigate();
+  const apiUrl = `${config.server}`;
+  
+  /*PROMPTS*/
   const [prompt, setPrompt] = useState('');
-  const [studentResponses, setStudentResponses] = useState([]);
-  const [selectedResponses, setSelectedResponses] = useState([]);
-  const [result, setResult] = useState('');
-  const [stats, setStats] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [errorMessagePrompt, setErrorMessagePrompt] = useState('');
-  const [errorMessageEvaluatePrompt, setErrorMessageEvaluatePrompt] = useState('');
   const [savedPrompts, setSavedPrompts] = useState([]);
   const [setSelectedPrompt] = useState('');
   const [queryBatchLength, setQueryBatchLength] = useState(20);
   const [evaluatorId, setEvaluatorId] = useState('');
   const [gptManager, setGptManager] = useState('gpt-4');
   const [temperature, setTemperature] = useState(0.2);
+  const [isPromptLoaded, setIsPromptLoaded] = useState(false);
+  const [selectedPromptId, setSelectedPromptId] = useState(null);
+  const [analysis, setAnalysis] = useState(null);
+  const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
+  const [description, setDescription] = useState('');
+
+  /*RESPONSES*/
+  const [studentResponses, setStudentResponses] = useState([]);
+  const [selectedResponses, setSelectedResponses] = useState([]);
   const [randomSelectCount, setRandomSelectCount] = useState(0);
-  const [isAddingResponse, setIsAddingResponse] = useState(false);
   const [newResponse, setNewResponse] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingEvaluate, setIsLoadingEvaluate] = useState(false);
   const [separator, setSeparator] = useState(',');
   const [fileColumns, setFileColumns] = useState([]);
   const [showSelectColumn, setShowSelectColumn] = useState(false);
-  const [username, setUsername] = useState('');
-  const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
+  const [selectedColumn, setSelectedColumn] = useState("");
+  const [isAddingResponse, setIsAddingResponse] = useState(false);
+
+
+  /* RESULTS */
+  const [result, setResult] = useState('');
+  const [stats, setStats] = useState('');
+  
+  /* MESSAGES */
+  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessagePrompt, setErrorMessagePrompt] = useState('');
+  const [errorMessageEvaluatePrompt, setErrorMessageEvaluatePrompt] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingEvaluate, setIsLoadingEvaluate] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
-  const [isPromptLoaded, setIsPromptLoaded] = useState(false);
-  const [selectedPromptId, setSelectedPromptId] = useState(null);
+  
+  
+  const [username, setUsername] = useState('');
+  const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
   const [randomlySelectedCount, setRandomlySelectedCount] = useState(0);
-  const [analysis, setAnalysis] = useState(null);
-  const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
-  const [fileData, setFileData] = useState(null);
-  const [selectedColumn, setSelectedColumn] = useState("");
-
+  
 
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
+  /*USE EFFECT*/
   useEffect(() => {
     handleLoadSavedPrompt();
   }, []);
@@ -82,7 +97,7 @@ const Home = () => {
         }
 
         try {
-            const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
+            const response = await axios.get(`http://${apiUrl}:5000/api/prompts/user-prompts`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -95,6 +110,8 @@ const Home = () => {
     fetchPrompts();
   }, []);
 
+
+  /* FILES */ 
   const handleFileUploadWithConfirmation = (e) => {
     if (studentResponses.length > 0) {
       const confirmLoad = window.confirm('Estás seguro de cargar nuevas respuestas? Ya tienes unas respuestas.');
@@ -106,130 +123,13 @@ const Home = () => {
     handleFileUpload(e);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token'); 
-    localStorage.removeItem('username');
-    navigate('/login'); 
-  };
-
-  const handleProfile = () => {
-    navigate('/perfil');
-  };
-
-  const handlePromptChange = (event) => {
-        setPrompt(event.target.value);
-  };
-
-  const updateStats = async (stats, responsesProcessed) => {
-    try {
-        await axios.post('http://localhost:5000/api/auth/actualizar', {
-            inputTokens: stats.input_tokens,
-            outputTokens: stats.output_tokens,
-            responsesProcessed: responsesProcessed
-        }, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-
-    } catch (error) {
-        console.error('Error al actualizar las estadísticas:', error);
+  const handleFileDrop = (e) => {
+    e.preventDefault(); 
+    const files = e.dataTransfer.files;
+  
+    if (files.length > 0) {
+      handleFileUploadWithConfirmation({ target: { files } });
     }
-};
-
-  const handleSubmit = async () => {
-        if (!prompt || selectedResponses.length === 0 || !evaluatorId) {
-          setErrorMessage('Por favor, complete todos los campos.');
-          setTimeout(() => {
-            setErrorMessage(''); 
-          }, 3000);
-          return;
-        }
-    
-        setErrorMessage('');
-        setIsLoading(true);
-    
-        try {
-          const response = await axios.post('http://localhost:4000/evaluate', {
-            prompt,
-            studentResponses: selectedResponses,
-            evaluator_id: evaluatorId,
-            gpt_manager: gptManager,
-            query_batch_length: queryBatchLength,
-            temperature,
-          });
-          
-          const stats = response.data.stats;
-          const responsesProcessed = selectedResponses.length;
-
-          setResult(response.data.result);
-          setStats(stats);
-          await updateStats(stats, responsesProcessed);
-
-        } catch (error) {
-          console.error('Error al obtener los resultados:', error);
-        } finally {
-          setIsLoading(false);
-        }
-  };
-
-  const handleCheckboxChange = (response) => {
-        if (selectedResponses.includes(response)) {
-          setSelectedResponses(selectedResponses.filter(item => item !== response)); 
-        } else {
-          setSelectedResponses([...selectedResponses, response]); 
-        }
-  };
-    
-  const handleSelectAll = (event) => {
-        if (event.target.checked) {
-          setSelectedResponses(studentResponses);
-        } else {
-          setSelectedResponses([]);
-        }
-  };
-    
-  const handleRandomSelect = () => {
-    if (randomSelectCount > 0) {
-      const totalResponses = studentResponses.length;
-      const countToSelect = Math.min(randomSelectCount, totalResponses);
-  
-      const shuffledResponses = [...studentResponses];
-      shuffledResponses.sort(() => Math.random() - 0.5); 
-  
-      const selected = shuffledResponses.slice(0, countToSelect); 
-      setSelectedResponses(selected);
-  
-      
-      setRandomlySelectedCount(countToSelect);
-      setTimeout(() => {
-        setRandomlySelectedCount(0);
-    }, 3000);
-    } else {
-      setRandomlySelectedCount(0);
-    }
-  };
-    
-  const handleDownload = () => {
-        const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'resultado.txt';
-        a.click();
-        URL.revokeObjectURL(url);
-  };
-    
-  const handleClear = () => {
-    setPrompt(''); 
-    setEvaluatorId('');
-    setStudentResponses('');
-    setResult('');
-    setShowSelectColumn(false);
-    setSelectedEvaluatorId('');
-    setIsPromptLoaded(false);
-    setSelectedPromptId(null);
-    setIsAnalysisVisible(false)
   };
 
   const handleFileUpload = (event) => {
@@ -279,17 +179,83 @@ const Home = () => {
         reader.readAsArrayBuffer(file);
       }
     }
-  };  
+  }; 
 
-  const handleFileDrop = (e) => {
-    e.preventDefault(); 
-    const files = e.dataTransfer.files;
+  /* USER */
+
+  const handleLogout = () => {
+    localStorage.removeItem('token'); 
+    localStorage.removeItem('username');
+    navigate('/login'); 
+  };
+
+  const updateStats = async (stats, responsesProcessed) => {
+    try {
+        await axios.post(`http://${apiUrl}:5000/api/auth/actualizar`, {
+            inputTokens: stats.input_tokens,
+            outputTokens: stats.output_tokens,
+            responsesProcessed: responsesProcessed
+        }, {
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+
+    } catch (error) {
+        console.error('Error al actualizar las estadísticas:', error);
+    }
+  };
   
-    if (files.length > 0) {
-      handleFileUploadWithConfirmation({ target: { files } });
+  const handleProfile = () => {
+    navigate('/perfil');
+  };
+
+
+  /* PROMPT */
+
+  const handlePromptChange = (event) => {
+        setPrompt(event.target.value);
+  };
+
+  const handleAnalyzePrompt = async () => {
+    if (!prompt) {
+      setErrorMessageEvaluatePrompt('Por favor, ingrese un prompt.');
+        setTimeout(() => {
+          setErrorMessageEvaluatePrompt(''); 
+      }, 3000);
+      return;
+    }
+
+    setIsLoadingEvaluate(true);
+
+    try {
+      const response = await axios.post(`http://${apiUrl}:4000/analyze-prompt`, { prompt });
+      setAnalysis(response.data.analysis);
+      setIsAnalysisVisible(true)
+    } catch (error) {
+      console.error('Error al analizar el prompt:', error);
+    }finally {
+      setIsLoadingEvaluate(false);
     }
   };
 
+  const handleClose = () => {
+      setIsAnalysisVisible(false);
+  };
+  
+  const handleClear = () => {
+    setPrompt(''); 
+    setEvaluatorId('');
+    setStudentResponses('');
+    setResult('');
+    setShowSelectColumn(false);
+    setSelectedEvaluatorId('');
+    setIsPromptLoaded(false);
+    setSelectedPromptId(null);
+    setIsAnalysisVisible(false);
+    setDescription('')
+  };
+    
   const handleSavePrompt = async () => {
     const batchLength = parseInt(queryBatchLength, 10);
     if (!prompt || !evaluatorId || !gptManager || isNaN(batchLength)) {
@@ -305,9 +271,10 @@ const Home = () => {
     try {
         if (isPromptLoaded) {
             await axios.put(
-                `http://localhost:5000/api/prompts/${evaluatorId}`,
+                `http://${apiUrl}:5000/api/prompts/${evaluatorId}`,
                 {
                     prompt,
+                    description,
                     evaluator_id: evaluatorId,
                     gpt_manager: gptManager,
                     query_batch_length: batchLength,
@@ -317,9 +284,10 @@ const Home = () => {
             );
         } else {
             await axios.post(
-                'http://localhost:5000/api/prompts',
+                `http://${apiUrl}:5000/api/prompts`,
                 {
                     prompt,
+                    description,
                     evaluator_id: evaluatorId,
                     gpt_manager: gptManager,
                     query_batch_length: batchLength,
@@ -341,11 +309,11 @@ const Home = () => {
         console.error('Error al guardar o actualizar el prompt:', error);
         setIsSaving(false);
     }
-};
-    
+  };
+  
   const handleLoadSavedPrompt = async () => {
     try {
-        const response = await axios.get('http://localhost:5000/api/prompts/user-prompts', {
+        const response = await axios.get(`http://${apiUrl}:5000/api/prompts/user-prompts`, {
             headers: getAuthHeaders(),
         });
         setSavedPrompts(response.data);
@@ -360,6 +328,7 @@ const Home = () => {
   
     if (evaluatorId === "") {
       setPrompt("");
+      setDescription("");
       setEvaluatorId("");
       setSelectedEvaluatorId('')
       setIsPromptLoaded(false);
@@ -370,6 +339,7 @@ const Home = () => {
   
       if (selectedPromptData) {
         setPrompt(selectedPromptData.prompt);
+        setDescription(selectedPromptData.description || '');
         setEvaluatorId(selectedPromptData.evaluator_id);
         setGptManager(selectedPromptData.gpt_manager);
         setQueryBatchLength(selectedPromptData.query_batch_length);
@@ -383,38 +353,87 @@ const Home = () => {
   
   const updatePrompt = async () => {
     const updatedPromptData = {
-      prompt: prompt,  
+      prompt: prompt,
+      description: description || '',
       evaluator_id: evaluatorId,
       gpt_manager: gptManager,
       query_batch_length: queryBatchLength,
       temperature: temperature
     };
-    
+  
     try {
-
       const response = await axios.put(
-        `http://localhost:5000/api/prompts/edit/${selectedPromptId}`, 
+        `http://${apiUrl}:5000/api/prompts/edit/${selectedPromptId}`, 
         updatedPromptData, 
         { headers: getAuthHeaders() }
       );
-
+  
       const updatedPrompt = response.data.updatedPrompt;
-
+  
+      // Actualiza el prompt actual en la lista
+      setSavedPrompts((prevPrompts) =>
+        prevPrompts.map((prompt) =>
+          prompt._id === updatedPrompt._id ? updatedPrompt : prompt
+        )
+      );
+  
+      // Actualiza los estados de los detalles del prompt
       setPrompt(updatedPrompt.prompt);
+      setDescription(updatedPrompt.description || '');
       setEvaluatorId(updatedPrompt.evaluator_id);
       setGptManager(updatedPrompt.gpt_manager);
       setQueryBatchLength(updatedPrompt.query_batch_length);
       setTemperature(updatedPrompt.temperature);
       setIsPromptLoaded(true);
       setErrorMessagePrompt('Prompt actualizado correctamente');
+  
       setTimeout(() => {
-        setErrorMessagePrompt(''); 
+        setErrorMessagePrompt('');
       }, 3000);
-     
+  
     } catch (error) {
       console.error('Error al actualizar el prompt:', error);
     }
-};
+  };
+  
+    
+  /* RESPONSES */
+  const handleRandomSelect = () => {
+    if (randomSelectCount > 0) {
+      const totalResponses = studentResponses.length;
+      const countToSelect = Math.min(randomSelectCount, totalResponses);
+  
+      const shuffledResponses = [...studentResponses];
+      shuffledResponses.sort(() => Math.random() - 0.5); 
+  
+      const selected = shuffledResponses.slice(0, countToSelect); 
+      setSelectedResponses(selected);
+  
+      
+      setRandomlySelectedCount(countToSelect);
+      setTimeout(() => {
+        setRandomlySelectedCount(0);
+    }, 3000);
+    } else {
+      setRandomlySelectedCount(0);
+    }
+  };
+  
+  const handleSelectAll = (event) => {
+        if (event.target.checked) {
+          setSelectedResponses(studentResponses);
+        } else {
+          setSelectedResponses([]);
+        }
+  };
+    
+  const handleCheckboxChange = (response) => {
+        if (selectedResponses.includes(response)) {
+          setSelectedResponses(selectedResponses.filter(item => item !== response)); 
+        } else {
+          setSelectedResponses([...selectedResponses, response]); 
+        }
+  };
   
   const handleAddResponseClick = () => {
           setIsAddingResponse(true);
@@ -456,31 +475,57 @@ const Home = () => {
     setStudentResponses(columnData);
   };
 
-  const handleAnalyzePrompt = async () => {
-    if (!prompt) {
-      setErrorMessageEvaluatePrompt('Por favor, ingrese un prompt.');
-        setTimeout(() => {
-          setErrorMessageEvaluatePrompt(''); 
-      }, 3000);
-      return;
-    }
+  /* EVALUATION */
 
-    setIsLoadingEvaluate(true);
+  const handleDownload = () => {
+        const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'resultado.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+  };
 
-    try {
-      const response = await axios.post('http://localhost:4000/analyze-prompt', { prompt });
-      setAnalysis(response.data.analysis);
-      setIsAnalysisVisible(true)
-    } catch (error) {
-      console.error('Error al analizar el prompt:', error);
-    }finally {
-      setIsLoadingEvaluate(false);
-    }
+  const handleSubmit = async () => {
+        if (!prompt || selectedResponses.length === 0 || !evaluatorId) {
+          setErrorMessage('Por favor, complete todos los campos.');
+          setTimeout(() => {
+            setErrorMessage(''); 
+          }, 3000);
+          return;
+        }
+    
+        setErrorMessage('');
+        setIsLoading(true);
+    
+        try {
+          const response = await axios.post(`http://${apiUrl}:4000/evaluate`, {
+            prompt,
+            description,
+            studentResponses: selectedResponses,
+            evaluator_id: evaluatorId,
+            gpt_manager: gptManager,
+            query_batch_length: queryBatchLength,
+            temperature,
+          });
+          
+          const stats = response.data.stats;
+          const responsesProcessed = selectedResponses.length;
+
+          setResult(response.data.result);
+          setStats(stats);
+          await updateStats(stats, responsesProcessed);
+
+        } catch (error) {
+          console.error('Error al obtener los resultados:', error);
+        } finally {
+          setIsLoading(false);
+        }
   };
-  
-  const handleClose = () => {
-      setIsAnalysisVisible(false);
-  };
+
+
+
 
           return (
             <div className=" flex items-center justify-center bg-gray-100">
@@ -533,13 +578,23 @@ const Home = () => {
                         id="prompt"
                         value={prompt}
                         onChange={handlePromptChange}
-                        className="border border-gray-300 rounded-lg px-4 py-2 w-full h-96 lg:h-[95%] mb-4 resize-none"
+                        placeholder="Escriba el prompt aquí..."
+                        className="border border-gray-300 rounded-lg px-4 py-2 w-full h-96 lg:h-[60%] resize-none"
                         rows="4"
+                      ></textarea>
+                      <label htmlFor="description" className="block ml-1 mb-2 border-b border-b-gray-500 mt-4">Descripción del prompt</label>
+                      <textarea
+                        id="description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        className="border border-gray-300 rounded-lg px-4 py-2 w-full h-24 mb-4 resize-none"
+                        rows="3"
+                        placeholder="Escriba una breve descripción del prompt aquí..."
                       ></textarea>
                     </div>
                     <div className='flex flex-col lg:w-[30%] lg:ml-4 justify-between'>
                       <p className="block mb-2 ml-1 border-b border-b-gray-500">Parámetros</p>
-                      <label htmlFor="evaluatorId" className="block px-5 mt-2">ID del Evaluador:</label>
+                      <label htmlFor="evaluatorId" className="block px-5 mt-2">Nombre del Prompt:</label>
                       <input
                         type="text"
                         id="evaluatorId"
@@ -547,7 +602,7 @@ const Home = () => {
                         onChange={(e) => setEvaluatorId(e.target.value)}
                         className="border border-gray-300 rounded-xl px-4 py-2 mx-5 mb-2"
                       />
-                      <label htmlFor="gptManager" className="block px-5 mt-2">Selecciona el GPT Manager:</label>
+                      <label htmlFor="gptManager" className="block px-5 mt-2">Selecciona el modelo de GPT:</label>
                       <select
                         id="gptManager"
                         value={gptManager}
@@ -602,7 +657,7 @@ const Home = () => {
                         </div>
                         <div className='mt-1 min-h-8'>
                           {errorMessagePrompt && (
-                            <div className="ml-4 text-black-500 lg:flex lg:justify-end lg:mr-2">
+                            <div className="ml-4 text-black-500 flex justify-end mr-2">
                               {errorMessagePrompt}
                             </div>
                           )}

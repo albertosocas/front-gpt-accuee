@@ -6,7 +6,7 @@ const router = express.Router();
 
 
 router.post('/', protect, async (req, res) => {
-    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature } = req.body;
+    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature, description } = req.body;
 
     const userId = req.user; 
     if (!userId) {
@@ -19,6 +19,7 @@ router.post('/', protect, async (req, res) => {
         gpt_manager,
         query_batch_length,
         temperature,
+        description,
         user_id: userId
     });
 
@@ -84,7 +85,7 @@ router.delete('/delete/:id', protect, async (req, res) => {
 router.put('/edit/:id', protect, async (req, res) => {
     const { id } = req.params;
     const userId = req.user;
-    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature } = req.body;
+    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature, description } = req.body;
 
     try {
         const existingPrompt = await Prompt.findById(id);
@@ -102,6 +103,7 @@ router.put('/edit/:id', protect, async (req, res) => {
         existingPrompt.gpt_manager = gpt_manager || existingPrompt.gpt_manager;
         existingPrompt.query_batch_length = query_batch_length || existingPrompt.query_batch_length;
         existingPrompt.temperature = temperature || existingPrompt.temperature;
+        existingPrompt.description = description || existingPrompt.description;
 
         const updatedPrompt = await existingPrompt.save();
 

@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import config from '../config';
 
 const Login = ({ setIsAuthenticated }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  const apiUrl = `${config.server}`;
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -17,7 +20,7 @@ const Login = ({ setIsAuthenticated }) => {
     }
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post(`http://${apiUrl}:5000/api/auth/login`, {
         username,
         password,
       });

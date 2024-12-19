@@ -4,6 +4,7 @@ import cerrarIcon from '../assets/cerrar.png';
 import avatarIcon from '../assets/avatar.png';
 import playIcon from '../assets/play.png';
 import axios from 'axios';
+import config from '../config';
 
 const Perfil = () => {
     const navigate = useNavigate();
@@ -11,12 +12,15 @@ const Perfil = () => {
     const [userData, setUserData] = useState(null);
     const [userPrompts, setUserPrompts] = useState([]);
     const [editingPrompt, setEditingPrompt] = useState(null);
+    const [expandedPrompt, setExpandedPrompt] = useState(null);
+    const apiUrl = `${config.server}`;
     const [updatedPrompt, setUpdatedPrompt] = useState({
         prompt: '',
         evaluator_id: '',
         gpt_manager: '',
         query_batch_length: '',
         temperature: '',
+        description:''
     });
 
     useEffect(() => {
@@ -30,10 +34,10 @@ const Perfil = () => {
                 const token = localStorage.getItem('token');
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 
-                const userResponse = await axios.get('http://localhost:5000/api/auth/profile', { headers });
+                const userResponse = await axios.get(`http://${apiUrl}:5000/api/auth/profile`, { headers });
                 setUserData(userResponse.data);
 
-                const promptsResponse = await axios.get('http://localhost:5000/api/prompts/user-prompts', { headers });
+                const promptsResponse = await axios.get(`http://${apiUrl}:5000/api/prompts/user-prompts`, { headers });
                 setUserPrompts(promptsResponse.data);
             } catch (error) {
                 console.error('Error al cargar los datos del perfil:', error);
@@ -62,7 +66,7 @@ const Perfil = () => {
             const token = localStorage.getItem('token');
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-            await axios.delete(`http://localhost:5000/api/prompts/delete/${id}`, { headers });
+            await axios.delete(`http://${apiUrl}:5000/api/prompts/delete/${id}`, { headers });
 
             setUserPrompts((prevPrompts) => prevPrompts.filter((prompt) => prompt._id !== id));
 
@@ -82,13 +86,12 @@ const Perfil = () => {
             const token = localStorage.getItem('token');
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
     
-            const response = await axios.put(`http://localhost:5000/api/prompts/edit/${editingPrompt}`, updatedPrompt, {
+            const response = await axios.put(`http://${apiUrl}:5000/api/prompts/edit/${editingPrompt}`, updatedPrompt, {
                 headers,
             });
-    
-            console.log('Prompt actualizado:', response.data);
+
             setEditingPrompt(null); 
-            const promptsResponse = await axios.get('http://localhost:5000/api/prompts/user-prompts', { headers });
+            const promptsResponse = await axios.get(`http://${apiUrl}:5000/api/prompts/user-prompts`, { headers });
             setUserPrompts(promptsResponse.data);
         } catch (error) {
             console.error('Error al actualizar el prompt:', error);
@@ -146,7 +149,7 @@ const Perfil = () => {
                                     {editingPrompt === prompt._id ? (
                                         <div>
                                             <h2 className="text-xl font-bold mb-2">Editando Prompt</h2>
-                                            <label className="block mb-2">ID del Evaluador:</label>
+                                            <label className="block mb-2">Nombre del prompt:</label>
                                             <input
                                                 type="text"
                                                 className="w-full mb-2 p-2 border rounded"
@@ -164,7 +167,16 @@ const Perfil = () => {
                                                 rows="15"
                                                 style={{ resize: 'vertical' }} 
                                             />
-                                            <label htmlFor="gptManager" className="block mb-2">Selecciona el GPT Manager:</label>
+                                            <label className="block mb-2">Descripción</label>
+                                            <textarea
+                                                className="w-full mb-4 p-2 border rounded"
+                                                value={updatedPrompt.description}
+                                                onChange={(e) => setUpdatedPrompt({ ...updatedPrompt, description: e.target.value })}
+                                                placeholder="Escriba una descripción del prompt . . ."
+                                                rows="3"
+                                                style={{ resize: 'vertical' }}
+                                            />
+                                            <label htmlFor="gptManager" className="block mb-2">Selecciona el modelo de GPT:</label>
                                             <select
                                                 id="gptManager"
                                                 value={updatedPrompt.gpt_manager}
@@ -174,6 +186,7 @@ const Perfil = () => {
                                                 className="w-full mb-2 p-2 border rounded"
                                             >
                                                 <option value="gpt-4">GPT-4</option>
+                                                <option value="gpt-4o">GPT-4o</option>
                                                 <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
                                             </select>
                                             <label className="block mb-2">Batch Length:</label>
@@ -217,7 +230,39 @@ const Perfil = () => {
                                             <h2 className="text-xl font-bold mb-2 pb-1 border-b border-b-black w-fit">
                                                 {prompt.evaluator_id}
                                             </h2>
-                                            <p>{prompt.prompt}</p>
+
+                                            {/* Descripción */}
+                                            <p className="text-gray-600 mb-2">{prompt.description}</p>
+
+                                            {/* Prompt truncado con "Leer más" */}
+                                            <div className="relative">
+                                                <p className="whitespace-pre-line">
+                                                    {expandedPrompt === prompt._id ? (
+                                                        <>
+                                                            {prompt.prompt}
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            {prompt.prompt.split('\n').slice(0, 5).join('\n')}
+                                                            {prompt.prompt.split('\n').length > 5 && '...'}
+                                                        </>
+                                                    )}
+                                                </p>
+                                                {prompt.prompt.split('\n').length > 5 && (
+                                                    <span
+                                                        className="text-blue-500 cursor-pointer mt-2 inline-block"
+                                                        onClick={() =>
+                                                            setExpandedPrompt(
+                                                                expandedPrompt === prompt._id ? null : prompt._id
+                                                            )
+                                                        }
+                                                    >
+                                                        {expandedPrompt === prompt._id ? 'Leer menos' : 'Leer más'}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Botones de edición y eliminación */}
                                             <div className="flex justify-end mr-3">
                                                 <button
                                                     onClick={() => handleEditPrompt(prompt)}
@@ -239,7 +284,7 @@ const Perfil = () => {
                         ) : (
                             <p>No tienes prompts guardados.</p>
                         )}
-                </div>
+                    </div>
             </div>
         </div>
 

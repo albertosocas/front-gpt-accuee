@@ -19,6 +19,11 @@ const promptSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  description: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   temperature: {
     type: Number,
     required: true
