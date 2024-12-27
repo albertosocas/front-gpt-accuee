@@ -8,6 +8,9 @@ import loadingIcon from '../assets/loading.gif';
 import cerrarIcon from '../assets/cerrar.png';
 import avatarIcon from '../assets/avatar.png';
 import checkIcon from '../assets/check.png';
+import okIcon from '../assets/ok.png';
+import alertaIcon from '../assets/alerta.png';
+import errorIcon from '../assets/error.png';
 import config from '../config';
 
 
@@ -219,28 +222,51 @@ const Home = () => {
 
   const handleAnalyzePrompt = async () => {
     if (!prompt) {
-      setErrorMessageEvaluatePrompt('Por favor, ingrese un prompt.');
+        setErrorMessageEvaluatePrompt('Por favor, ingrese un prompt.');
         setTimeout(() => {
-          setErrorMessageEvaluatePrompt(''); 
-      }, 3000);
-      return;
+            setErrorMessageEvaluatePrompt('');
+        }, 3000);
+        return;
     }
 
     setIsLoadingEvaluate(true);
 
     try {
-      const response = await axios.post(`http://${apiUrl}:4000/analyze-prompt`, { prompt });
-      setAnalysis(response.data.analysis);
-      setIsAnalysisVisible(true)
+        const response = await axios.post(`http://${apiUrl}:4000/analyze-prompt`, { prompt });
+        const analysis = response.data.analysis;
+        setAnalysis(analysis);
+        setIsAnalysisVisible(true);
+
+        const promptId = selectedPromptId;
+        if (!promptId) {
+            console.error('No se ha proporcionado un ID de prompt.');
+            return;
+        }
+
+
+
+        await axios.put(`http://${apiUrl}:5000/api/prompts/edit/${promptId}`, { evaluation: analysis }, { headers: getAuthHeaders() });
     } catch (error) {
-      console.error('Error al analizar el prompt:', error);
-    }finally {
-      setIsLoadingEvaluate(false);
+        console.error('Error al analizar o guardar la evaluación del prompt:', error);
+    } finally {
+        setIsLoadingEvaluate(false);
     }
   };
 
   const handleClose = () => {
       setIsAnalysisVisible(false);
+  };
+
+  const handleOpen = () => {
+    if (!analysis) {
+        setErrorMessageEvaluatePrompt('No hay una evaluación guardada para este prompt.');
+        setTimeout(() => {
+            setErrorMessageEvaluatePrompt('');
+        }, 3000);
+        return;
+    }
+
+    setIsAnalysisVisible(true);
   };
   
   const handleClear = () => {
@@ -299,6 +325,7 @@ const Home = () => {
 
         setIsSaving(false);
         setIsSaved(true);
+        setAnalysis(null)
         setIsPromptLoaded(true); 
         setErrorMessagePrompt('Prompt guardado correctamente');
         setTimeout(() => {
@@ -330,10 +357,10 @@ const Home = () => {
       setPrompt("");
       setDescription("");
       setEvaluatorId("");
-      setSelectedEvaluatorId('')
+      setSelectedEvaluatorId('');
       setIsPromptLoaded(false);
       setSelectedPromptId(null);
-      setIsAnalysisVisible(false)
+      setIsAnalysisVisible(false);
     } else {
       const selectedPromptData = savedPrompts.find((prompt) => prompt.evaluator_id === evaluatorId);
   
@@ -347,6 +374,7 @@ const Home = () => {
         setIsPromptLoaded(true);
         setSelectedPromptId(selectedPromptData._id);
         setIsAnalysisVisible(false)
+        setAnalysis(selectedPromptData.evaluation || null);
       }
     }
   };
@@ -370,14 +398,12 @@ const Home = () => {
   
       const updatedPrompt = response.data.updatedPrompt;
   
-      // Actualiza el prompt actual en la lista
       setSavedPrompts((prevPrompts) =>
         prevPrompts.map((prompt) =>
           prompt._id === updatedPrompt._id ? updatedPrompt : prompt
         )
       );
   
-      // Actualiza los estados de los detalles del prompt
       setPrompt(updatedPrompt.prompt);
       setDescription(updatedPrompt.description || '');
       setEvaluatorId(updatedPrompt.evaluator_id);
@@ -478,14 +504,15 @@ const Home = () => {
   /* EVALUATION */
 
   const handleDownload = () => {
-        const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'resultado.txt';
-        a.click();
-        URL.revokeObjectURL(url);
-  };
+    const blob = new Blob([JSON.stringify(result, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'resultado.json'; 
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
 
   const handleSubmit = async () => {
         if (!prompt || selectedResponses.length === 0 || !evaluatorId) {
@@ -675,6 +702,23 @@ const Home = () => {
                             'Evaluar mi prompt'
                           )}
                           </button>
+                          {isPromptLoaded && (
+                            <div className="flex flex-row mt-2 content-center">
+                              {analysis?.final?.valor === "Correcto" ? (
+                                <img src={okIcon} alt="Correcto" className="w-8 h-8 mr-2" />
+                              ) : analysis?.final?.valor === "error" ? (
+                                <img src={errorIcon} alt="Error" className="w-8 h-8 mr-2" />
+                              ) : (
+                                <img src={alertaIcon} alt="Alerta" className="w-8 h-8 mr-2" />
+                              )}
+                              <button
+                                onClick={handleOpen}
+                                className="w-full px-4 py-1 text-black bg-gray-300 hover:bg-gray-400 rounded-xl"
+                              >
+                                Abrir última evaluación guardada
+                              </button>
+                            </div>
+                          )}
                         <div className='mt-2 min-h-6 md:mr-2'>
                           {errorMessageEvaluatePrompt && (
                             <div className="ml-4 text-black-500 lg:flex lg:justify-end lg:mr-2">
@@ -701,7 +745,7 @@ const Home = () => {
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Descripción</h3>
                             <p className="text-gray-600">{analysis?.descripción?.justificación}</p>
-                            <span className={`text-sm font-semibold ${analysis?.descripción?.valor === 'correcto' ? 'text-green-600' : analysis?.descripción?.valor === 'incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                            <span className={`text-sm font-semibold ${analysis?.descripción?.valor === 'Correcto' ? 'text-green-600' : analysis?.descripción?.valor === 'Incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
                               Valor: {analysis?.descripción?.valor}
                             </span>
                           </div>
@@ -710,7 +754,7 @@ const Home = () => {
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Rúbrica</h3>
                             <p className="text-gray-600">{analysis?.rúbrica?.justificación}</p>
-                            <span className={`text-sm font-semibold ${analysis?.rúbrica?.valor === 'correcto' ? 'text-green-600' : analysis?.rúbrica?.valor === 'incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                            <span className={`text-sm font-semibold ${analysis?.rúbrica?.valor === 'Correcto' ? 'text-green-600' : analysis?.rúbrica?.valor === 'Incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
                               Valor: {analysis?.rúbrica?.valor}
                             </span>
                           </div>
@@ -719,7 +763,7 @@ const Home = () => {
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Resultado</h3>
                             <p className="text-gray-600">{analysis?.resultado?.justificación}</p>
-                            <span className={`text-sm font-semibold ${analysis?.resultado?.valor === 'correcto' ? 'text-green-600' : analysis?.resultado?.valor === 'incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                            <span className={`text-sm font-semibold ${analysis?.resultado?.valor === 'Correcto' ? 'text-green-600' : analysis?.resultado?.valor === 'Incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
                               Valor: {analysis?.resultado?.valor}
                             </span>
                           </div>
@@ -896,17 +940,6 @@ const Home = () => {
                   <div className="flex flex-col bg-gray-100 p-6 rounded-lg shadow-md mt-6 space-y-4">
                     <h2 className="text-xl font-semibold text-gray-800">Resultado:</h2>
         
-                    {/* Sección de Evaluación GPT */}
-                    <div className="bg-white p-4 rounded-lg shadow-md">
-                      <h3 className="text-lg font-medium text-gray-700 mb-2">Evaluación GPT:</h3>
-                      {Object.entries(result["evaluación GPT"]).map(([key, value]) => (
-                        <div key={key} className="text-gray-600">
-                          <span className="font-semibold">{`Respuesta ${key}: `}</span>
-                          {value}
-                        </div>
-                      ))}
-                    </div>
-        
                     {/* Sección de Respuestas */}
                     <div className="bg-white p-4 rounded-lg shadow-md">
                       <h3 className="text-lg font-medium text-gray-700 mb-2">Respuestas:</h3>
@@ -918,22 +951,23 @@ const Home = () => {
                       ))}
                     </div>
         
-                    {/* Sección de Respuesta Completa GPT */}
+                    {/* Sección de Evaluación GPT */}
                     <div className="bg-white p-4 rounded-lg shadow-md">
-                      <h3 className="text-lg font-medium text-gray-700 mb-2">Respuesta Completa GPT:</h3>
-                      {Object.entries(result["respuesta completa GPT"]).map(([key, value]) => (
+                      <h3 className="text-lg font-medium text-gray-700 mb-2">Evaluación GPT:</h3>
+                      {Object.entries(result["evaluación GPT"]).map(([key, value]) => (
                         <div key={key} className="text-gray-600">
                           <span className="font-semibold">{`Respuesta ${key}: `}</span>
                           {value}
                         </div>
                       ))}
                     </div>
-                    <h2>Estadísticas de Uso:</h2>
+                    <h2 className='text-xl font-semibold text-gray-800'>Estadísticas de Uso:</h2>
                     {stats && (
                     <div>
-                      <p><strong>Input Tokens:</strong> {stats.input_tokens}</p>
-                      <p><strong>Output Tokens:</strong> {stats.output_tokens}</p>
-                      <p><strong>Elapsed Time:</strong> {stats.elapsed_time} segundos</p>
+                      <p><strong>Modelo GPT utilizado: </strong>{gptManager}</p>
+                      <p><strong>Tokens de entrada:</strong> {stats.input_tokens}</p>
+                      <p><strong>Tokens de salida:</strong> {stats.output_tokens}</p>
+                      <p><strong>Tiempo transcurrido:</strong> {stats.elapsed_time} segundos</p>
                       <p><strong>Número de Respuestas Procesadas:</strong> {Object.keys(result.response).length}</p>
                     </div>
                     )}

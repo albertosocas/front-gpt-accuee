@@ -22,35 +22,32 @@ See the section about [deployment](https://facebook.github.io/create-react-app/d
 
 ### `npm run start-back`
 
-Ejecuta el backend del proyecto
+    Ejecuta el backend del proyecto
 
 ### `npm run start-api`
 
-Ejecuta la api del proyecto
+    Ejecuta la api del proyecto
 
 ### `npm run start`
 
-Ejecuta el prompt del proyecto
+    Ejecuta el prompt del proyecto
 
 ### `npm run start-app`
 
-Ejecuta el proyecto entero
+    Ejecuta el proyecto entero
 
-# Eliminar la carpeta node_modules y package-lock.json
+# Eliminar la carpeta node_modules y package-lock.json y Reinstalar las dependencias
 
-rm -rf node_modules package-lock.json
-
-# Reinstalar las dependencias
-
-npm install
+    rm -rf node_modules package-lock.json
+    npm install
 
 ## Exportar tu clave api
 
-export OPENAI_API_KEY="tu_clave_api"
+    export OPENAI_API_KEY="tu_clave_api"
 
 ## Crear directorio output
 
-Crea un directorio output y dale permisos
+    Crea un directorio output y dale permisos
 
-mkdir output
-chmod -R 755 output
+    mkdir output
+    chmod -R 755 output

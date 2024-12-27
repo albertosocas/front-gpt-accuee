@@ -28,6 +28,10 @@ const promptSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  evaluation: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null 
+  },
   user_id: { 
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

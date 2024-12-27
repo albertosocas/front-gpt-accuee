@@ -85,7 +85,7 @@ router.delete('/delete/:id', protect, async (req, res) => {
 router.put('/edit/:id', protect, async (req, res) => {
     const { id } = req.params;
     const userId = req.user;
-    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature, description } = req.body;
+    const { prompt, evaluator_id, gpt_manager, query_batch_length, temperature, description, evaluation } = req.body;
 
     try {
         const existingPrompt = await Prompt.findById(id);
@@ -104,6 +104,9 @@ router.put('/edit/:id', protect, async (req, res) => {
         existingPrompt.query_batch_length = query_batch_length || existingPrompt.query_batch_length;
         existingPrompt.temperature = temperature || existingPrompt.temperature;
         existingPrompt.description = description || existingPrompt.description;
+        if (evaluation !== undefined) {
+            existingPrompt.evaluation = evaluation;
+        }
 
         const updatedPrompt = await existingPrompt.save();
 
@@ -113,6 +116,29 @@ router.put('/edit/:id', protect, async (req, res) => {
         res.status(500).json({ message: 'Error al editar el prompt.' });
     }
 });
+
+
+router.put('/evaluate/:id', protect, async (req, res) => {
+    const { id } = req.params;
+    const { evaluation } = req.body;
+
+    try {
+        const prompt = await Prompt.findById(id);
+
+        if (!prompt) {
+            return res.status(404).json({ message: 'Prompt no encontrado.' });
+        }
+
+        prompt.evaluation = evaluation;
+        const updatedPrompt = await prompt.save();
+
+        res.status(200).json({ message: 'Evaluación actualizada correctamente.', updatedPrompt });
+    } catch (error) {
+        console.error('Error al actualizar la evaluación:', error);
+        res.status(500).json({ message: 'Error al actualizar la evaluación.' });
+    }
+});
+
 
 
 
