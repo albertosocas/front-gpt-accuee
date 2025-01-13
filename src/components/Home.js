@@ -14,9 +14,6 @@ import errorIcon from '../assets/error.png';
 import config from '../config';
 
 
-
-
-
 const Home = () => {
   const navigate = useNavigate();
   const apiUrl = `${config.server}`;
@@ -34,6 +31,7 @@ const Home = () => {
   const [analysis, setAnalysis] = useState(null);
   const [isAnalysisVisible, setIsAnalysisVisible] = useState(false);
   const [description, setDescription] = useState('');
+  const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
 
   /*RESPONSES*/
   const [studentResponses, setStudentResponses] = useState([]);
@@ -45,6 +43,7 @@ const Home = () => {
   const [showSelectColumn, setShowSelectColumn] = useState(false);
   const [selectedColumn, setSelectedColumn] = useState("");
   const [isAddingResponse, setIsAddingResponse] = useState(false);
+  const [randomlySelectedCount, setRandomlySelectedCount] = useState(0);
 
 
   /* RESULTS */
@@ -60,12 +59,9 @@ const Home = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   
-  
+  /* USERS */
   const [username, setUsername] = useState('');
-  const [selectedEvaluatorId, setSelectedEvaluatorId] = useState('');
-  const [randomlySelectedCount, setRandomlySelectedCount] = useState(0);
   
-
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return token ? { Authorization: `Bearer ${token}` } : {};
@@ -511,7 +507,7 @@ const Home = () => {
     a.download = 'resultado.json'; 
     a.click();
     URL.revokeObjectURL(url);
-};
+  };
 
 
   const handleSubmit = async () => {
@@ -741,7 +737,6 @@ const Home = () => {
                          </button>
                       </div>
                         <div className="space-y-4">
-                          {/* Descripción */}
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Descripción</h3>
                             <p className="text-gray-600">{analysis?.descripción?.justificación}</p>
@@ -749,8 +744,6 @@ const Home = () => {
                               Valor: {analysis?.descripción?.valor}
                             </span>
                           </div>
-
-                          {/* Rúbrica */}
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Rúbrica</h3>
                             <p className="text-gray-600">{analysis?.rúbrica?.justificación}</p>
@@ -758,8 +751,6 @@ const Home = () => {
                               Valor: {analysis?.rúbrica?.valor}
                             </span>
                           </div>
-
-                          {/* Resultado */}
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Resultado</h3>
                             <p className="text-gray-600">{analysis?.resultado?.justificación}</p>
@@ -934,8 +925,7 @@ const Home = () => {
                   )}
                 </div>
                 
-                { /* EVALUACION */ }
-        
+                { /* EVALUACION */ }       
                 {result && (
                   <div className="flex flex-col bg-gray-100 p-6 rounded-lg shadow-md mt-6 space-y-4">
                     <h2 className="text-xl font-semibold text-gray-800">Resultado:</h2>

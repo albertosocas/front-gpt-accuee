@@ -230,11 +230,7 @@ const Perfil = () => {
                                             <h2 className="text-xl font-bold mb-2 pb-1 border-b border-b-black w-fit">
                                                 {prompt.evaluator_id}
                                             </h2>
-
-                                            {/* Descripción */}
                                             <p className="text-gray-600 mb-2">{prompt.description}</p>
-
-                                            {/* Prompt truncado con "Leer más" */}
                                             <div className="relative">
                                                 <p className="whitespace-pre-line">
                                                     {expandedPrompt === prompt._id ? (
@@ -262,7 +258,6 @@ const Perfil = () => {
                                                 )}
                                             </div>
 
-                                            {/* Botones de edición y eliminación */}
                                             <div className="flex justify-end mr-3">
                                                 <button
                                                     onClick={() => handleEditPrompt(prompt)}
