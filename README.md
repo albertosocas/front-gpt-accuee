@@ -1,6 +1,4 @@
-## Available Scripts
-
-In the project directory, you can run:
+### Scripts para ejecuciones
 
 ### `npm run start-back`
 
