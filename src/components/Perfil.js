@@ -102,7 +102,7 @@ const Perfil = () => {
         <div className="flex items-center justify-center bg-gray-100">
             <div className="w-full p-6 bg-white rounded-lg shadow-md">
                 {/* SECCION INICIAL */}
-                <div className="flex flex-row justify-between border-b border-b-gray-500 lg:mb-5">
+                <nav className="flex flex-row justify-between border-b border-b-gray-500 lg:mb-5">
                     <h1 className="text-2xl font-bold m-2 pt-3 ">{username}</h1>
                     <div className="flex flex-row lg:w-[30%] lg:justify-between">
                         <button
@@ -127,21 +127,21 @@ const Perfil = () => {
                             <img src={cerrarIcon} alt="cerrar" className="h-8 w-8" />
                         </button>
                     </div>
-                </div>
+                </nav>
 
                 {/* INFORMACIÓN DEL USUARIO */}
                 <h1 className="text-2xl border-b border-b-gray-500 pb-2 font-bold m-2 pt-3">Tokens y Respuestas</h1>
 
                 {userData && (
-                    <div className="border border-solid p-4 bg-gray-100 rounded-lg mt-5">
+                    <header className="border border-solid p-4 bg-gray-100 rounded-lg mt-5">
                         <p>Tokens de entrada: {userData.inputTokens || 0}</p>
                         <p>Tokens de salida: {userData.outputTokens || 0}</p>
                         <p>Respuestas procesadas: {userData.responsesProcessed || 0}</p>
-                    </div>
+                    </header>
                 )}
 
                 {/* PROMPTS DEL USUARIO */}
-                <div className="mt-5">
+                <main className="mt-5">
                 <h1 className="text-2xl border-b border-b-gray-500 pb-2 font-bold m-2 pt-3">Mis prompts</h1>
                         {userPrompts.length > 0 ? (
                             userPrompts.map((prompt, index) => (
@@ -149,8 +149,9 @@ const Perfil = () => {
                                     {editingPrompt === prompt._id ? (
                                         <div>
                                             <h2 className="text-xl font-bold mb-2">Editando Prompt</h2>
-                                            <label className="block mb-2">Nombre del prompt:</label>
+                                            <label htmlFor="promptName" className="block mb-2">Nombre del prompt:</label>
                                             <input
+                                                id="promptName"
                                                 type="text"
                                                 className="w-full mb-2 p-2 border rounded"
                                                 value={updatedPrompt.evaluator_id}
@@ -158,8 +159,9 @@ const Perfil = () => {
                                                     setUpdatedPrompt({ ...updatedPrompt, evaluator_id: e.target.value })
                                                 }
                                             />
-                                            <label className="block mb-2">Prompt</label>
+                                            <label htmlFor="prompt" className="block mb-2">Prompt</label>
                                             <textarea
+                                                id="prompt"
                                                 className="w-full mb-4 p-2 border rounded"
                                                 value={updatedPrompt.prompt}
                                                 onChange={(e) => setUpdatedPrompt({ ...updatedPrompt, prompt: e.target.value })}
@@ -167,8 +169,9 @@ const Perfil = () => {
                                                 rows="15"
                                                 style={{ resize: 'vertical' }} 
                                             />
-                                            <label className="block mb-2">Descripción</label>
+                                            <label htmlFor="promptDescription" className="block mb-2">Descripción</label>
                                             <textarea
+                                                id="promptDescription"
                                                 className="w-full mb-4 p-2 border rounded"
                                                 value={updatedPrompt.description}
                                                 onChange={(e) => setUpdatedPrompt({ ...updatedPrompt, description: e.target.value })}
@@ -189,8 +192,9 @@ const Perfil = () => {
                                                 <option value="gpt-4o">GPT-4o</option>
                                                 <option value="gpt-3.5-turbo">GPT-3.5-Turbo</option>
                                             </select>
-                                            <label className="block mb-2">Batch Length:</label>
+                                            <label  htmlFor="promptBatch" className="block mb-2">Batch Length:</label>
                                             <input
+                                                id="promptBatch"
                                                 type="number"
                                                 className="w-full mb-2 p-2 border rounded"
                                                 value={updatedPrompt.query_batch_length}
@@ -198,8 +202,9 @@ const Perfil = () => {
                                                     setUpdatedPrompt({ ...updatedPrompt, query_batch_length: e.target.value })
                                                 }
                                             />
-                                            <label className="block mb-2">Temperatura:</label>
+                                            <label  htmlFor="promptTemperature" className="block mb-2">Temperatura:</label>
                                             <input
+                                                id="promptTemperature"
                                                 type="number"
                                                 step="0.1"
                                                 min="0"
@@ -213,13 +218,13 @@ const Perfil = () => {
                                             <div className="flex justify-end">
                                                 <button
                                                     onClick={handleUpdatePrompt}
-                                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-xl mt-2 mr-5"
+                                                    className="bg-blue-500 hover:bg-blue-600 text-black font-bold py-2 px-4 rounded-xl mt-2 mr-5"
                                                 >
                                                     Guardar
                                                 </button>
                                                 <button
                                                     onClick={() => setEditingPrompt(null)}
-                                                    className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl mt-2 mr-5"
+                                                    className="bg-gray-400 hover:bg-gray-500 text-black font-bold py-2 px-4 rounded-xl mt-2 mr-5"
                                                 >
                                                     Cancelar
                                                 </button>
@@ -246,7 +251,7 @@ const Perfil = () => {
                                                 </p>
                                                 {prompt.prompt.split('\n').length > 5 && (
                                                     <span
-                                                        className="text-blue-500 cursor-pointer mt-2 inline-block"
+                                                        className="text-blue-700 cursor-pointer mt-2 inline-block"
                                                         onClick={() =>
                                                             setExpandedPrompt(
                                                                 expandedPrompt === prompt._id ? null : prompt._id
@@ -261,13 +266,13 @@ const Perfil = () => {
                                             <div className="flex justify-end mr-3">
                                                 <button
                                                     onClick={() => handleEditPrompt(prompt)}
-                                                    className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl mt-2 mr-5"
+                                                    className="bg-gray-400 hover:bg-gray-500 text-black font-bold py-2 px-4 rounded-xl mt-2 mr-5"
                                                 >
                                                     Editar
                                                 </button>
                                                 <button
                                                     onClick={() => deletePrompt(prompt._id)}
-                                                    className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-1 px-4 rounded-xl mt-2"
+                                                    className="bg-gray-400 hover:bg-gray-500 text-black font-bold py-1 px-4 rounded-xl mt-2"
                                                 >
                                                     Eliminar
                                                 </button>
@@ -279,7 +284,7 @@ const Perfil = () => {
                         ) : (
                             <p>No tienes prompts guardados.</p>
                         )}
-                    </div>
+                    </main>
             </div>
         </div>
 

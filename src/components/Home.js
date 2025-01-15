@@ -555,10 +555,10 @@ const Home = () => {
               <div className="w-full p-6 bg-white rounded-lg shadow-md">
         
               { /* SECCION INICIAL */ }
-                <div className='border-b border-b-gray-500 mb-5 xs:flex flex-col lg:flex lg:flex-row lg:justify-between '>
+                <nav aria-label="Menú principal" className='border-b border-b-gray-500 mb-5 xs:flex flex-col lg:flex lg:flex-row lg:justify-between '>
                   <h1 className="text-2xl font-bold m-2 pt-3 ">Evaluador Automático</h1>
                   <div className=' flex flex-row lg:w-[30%] justify-between'>
-                    <p className='text-2xl font-bold m-2 '>{username}</p>
+                    <h1 className='text-2xl font-bold m-2 '>{username}</h1>
                     <div className='flex flex-row sm:w-[35%] md:w-[50%] sm:justify-end lg:justify-between'>
                       <button
                       onClick={handleProfile}
@@ -576,10 +576,10 @@ const Home = () => {
                       </button>
                     </div>
                   </div>
-                </div>
+                </nav>
         
                 { /* SECCION PROMPT */ }
-                <div className=' border border-solid p-4 bg-gray-100 rounded-lg'>
+                <section aria-label="Sección prompts" className=' border border-solid p-4 bg-gray-100 rounded-lg'>
                   <label htmlFor="savedPrompts" className="block ml-1 mb-2 border-b border-b-gray-500 text-xl font-bold font-sans">Seleccione un prompt guardado</label>
                   <select
                       id="savedPrompts"
@@ -668,7 +668,7 @@ const Home = () => {
                           </button>
                           <button
                             onClick={isPromptLoaded ? updatePrompt : handleSavePrompt}
-                            className={`flex items-center justify-center bg-gray-400 hover:bg-gray-500 text-white font-bold w-[50%] sm:w-[70%] lg:w-[60%] py-2 px-2 mr-2 rounded-xl ${isSaving || isSaved ? 'cursor-not-allowed' : ''}`}
+                            className={`flex items-center justify-center bg-gray-400 hover:bg-gray-500 text-black font-bold w-[50%] sm:w-[70%] lg:w-[60%] py-2 px-2 mr-2 rounded-xl ${isSaving || isSaved ? 'cursor-not-allowed' : ''}`}
                             disabled={isSaving || isSaved}
                           >
                             {isSaved ? (
@@ -689,7 +689,7 @@ const Home = () => {
                       <div className='ml-4 mr-2'>
                         <button 
                         onClick={handleAnalyzePrompt}
-                        className='bg-gray-400 hover:bg-gray-500 text-white w-full font-bold py-2 px-4 rounded-xl'
+                        className='bg-gray-400 hover:bg-gray-500 text-black w-full font-bold py-2 px-4 rounded-xl'
                         disabled={isLoading}
                         >
                         {isLoadingEvaluate ? (
@@ -731,7 +731,7 @@ const Home = () => {
                         <h2 className="text-xl font-semibold text-gray-800">Resultado del análisis:</h2>
                         <button
                          onClick={handleClose}
-                         className='bg-gray-400 mt-2 md:mt-0 hover:bg-gray-500 text-white w-full md:w-[25%] font-bold py-2 px-4 rounded-xl '
+                         className='bg-gray-400 mt-2 md:mt-0 hover:bg-gray-500 text-black w-full md:w-[25%] font-bold py-2 px-4 rounded-xl '
                         >
                           Cerrar análisis
                          </button>
@@ -740,34 +740,34 @@ const Home = () => {
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Descripción</h3>
                             <p className="text-gray-600">{analysis?.descripción?.justificación}</p>
-                            <span className={`text-sm font-semibold ${analysis?.descripción?.valor === 'Correcto' ? 'text-green-600' : analysis?.descripción?.valor === 'Incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                            <span className={`text-sm font-semibold ${analysis?.descripción?.valor === 'Correcto' ? 'text-green-700' : analysis?.descripción?.valor === 'Incorrecto' ? 'text-red-700' : 'text-yellow-700'}`}>
                               Valor: {analysis?.descripción?.valor}
                             </span>
                           </div>
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Rúbrica</h3>
                             <p className="text-gray-600">{analysis?.rúbrica?.justificación}</p>
-                            <span className={`text-sm font-semibold ${analysis?.rúbrica?.valor === 'Correcto' ? 'text-green-600' : analysis?.rúbrica?.valor === 'Incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                            <span className={`text-sm font-semibold ${analysis?.rúbrica?.valor === 'Correcto' ? 'text-green-700' : analysis?.rúbrica?.valor === 'Incorrecto' ? 'text-red-700' : 'text-yellow-700'}`}>
                               Valor: {analysis?.rúbrica?.valor}
                             </span>
                           </div>
                           <div className="bg-white p-4 rounded-lg shadow-md">
                             <h3 className="text-lg font-medium text-gray-700">Resultado</h3>
                             <p className="text-gray-600">{analysis?.resultado?.justificación}</p>
-                            <span className={`text-sm font-semibold ${analysis?.resultado?.valor === 'Correcto' ? 'text-green-600' : analysis?.resultado?.valor === 'Incorrecto' ? 'text-red-600' : 'text-yellow-600'}`}>
+                            <span className={`text-sm font-semibold ${analysis?.resultado?.valor === 'Correcto' ? 'text-green-700' : analysis?.resultado?.valor === 'Incorrecto' ? 'text-red-700' : 'text-yellow-700'}`}>
                               Valor: {analysis?.resultado?.valor}
                             </span>
                           </div>
                         </div>
                     </div>
                   )}
-                </div>  
+                </section>  
                 
                 { /* SECCION RESPUESTAS */ }
-                <div className='mt-5 border border-solid p-4 bg-gray-100 rounded-lg'>
+                <section aria-label="Seccion respuestas" className='mt-5 border border-solid p-4 bg-gray-100 rounded-lg'>
                   <div className='sm:flex sm:flex-col lg:flex lg:flex-row'>
                     <div className='flex flex-col lg:w-[70%] '>
-                      <label htmlFor="studentResponses" className="block mb-2 border-b border-b-gray-500 text-xl font-bold font-sans">Respuestas de los estudiantes</label>
+                      <h2 htmlFor="studentResponses" className="block mb-2 border-b border-b-gray-500 text-xl font-bold font-sans">Respuestas de los estudiantes</h2>
                       <div>
                         {studentResponses.length > 0 && (
                           <div className='max-h-96 overflow-y-auto'>
@@ -879,7 +879,9 @@ const Home = () => {
                         <label htmlFor="selectAll">Seleccionar todas las respuestas</label>
                       </div>
                       <div className="flex flex-col mb-4 min-h-20">
+                        <label for="randomSelectCount" class="block mb-1 text-black">Cantidad de respuestas a seleccionar</label>
                         <div className='flex items-center'>
+                        
                           <input
                           type="number"
                           id="randomSelectCount"
@@ -888,9 +890,10 @@ const Home = () => {
                           placeholder="Cantidad de respuestas a seleccionar"
                           className="border border-gray-300 rounded-xl p-2 mr-5 w-20"
                         />
+                       
                         <button
                           onClick={handleRandomSelect}
-                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl"
+                          className="bg-gray-400 hover:bg-gray-500 text-black font-bold py-2 px-4 rounded-xl"
                         >
                           Seleccionar al azar
                         </button>
@@ -906,7 +909,7 @@ const Home = () => {
                       </div>
                       <button
                           onClick={handleSubmit}
-                          className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-xl"
+                          className="bg-gray-400 hover:bg-gray-500 text-black font-bold py-2 px-4 rounded-xl"
                           disabled={isLoading}
                         >
                           {isLoading ? (
@@ -923,11 +926,11 @@ const Home = () => {
                       {errorMessage}
                     </div>
                   )}
-                </div>
+                </section>
                 
                 { /* EVALUACION */ }       
                 {result && (
-                  <div className="flex flex-col bg-gray-100 p-6 rounded-lg shadow-md mt-6 space-y-4">
+                  <section aria-label="seccion evaluacion" className="flex flex-col bg-gray-100 p-6 rounded-lg shadow-md mt-6 space-y-4">
                     <h2 className="text-xl font-semibold text-gray-800">Resultado:</h2>
         
                     {/* Sección de Respuestas */}
@@ -963,11 +966,11 @@ const Home = () => {
                     )}
                     <button 
                     onClick={handleDownload}
-                    className=" bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4 mt-6 rounded "
+                    className=" bg-gray-400 hover:bg-gray-500 text-black font-bold py-2 px-4 mt-6 rounded "
                     >
                       Descargar Resultado
                     </button>
-                  </div>
+                  </section>
                 )}
               </div>
             </div>

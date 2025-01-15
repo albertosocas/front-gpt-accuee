@@ -57,7 +57,7 @@ router.get('/profile', protect, async (req, res) => {
         if (!user) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-        console.log("User profile data:", user); // Log para verificar los datos
+        console.log("User profile data:", user); 
         res.json({ 
             username: user.username, 
             email: user.email,
